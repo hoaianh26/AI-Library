@@ -6,7 +6,10 @@ import './index.css';
 import App from './App.jsx';
 import Register from './components/Register.jsx';
 import Login from './components/Login.jsx';
+import AdminLogin from './components/AdminLogin.jsx';
 import PrivateRoute from './components/PrivateRoute.jsx';
+import AdminRoute from './components/AdminRoute.jsx';
+import AdminDashboard from './components/AdminDashboard.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
 import BookDetails from './components/BookDetails.jsx';
 import EditBook from './components/EditBook.jsx';
@@ -22,6 +25,7 @@ const AppRoutes = () => {
         {/* Standalone routes without Navbar */}
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
 
         {/* Routes wrapped by the Layout (with Navbar) */}
         <Route 
@@ -36,6 +40,14 @@ const AppRoutes = () => {
           <Route path="books/:id" element={<BookDetails />} />
           <Route path="edit-book/:id" element={<EditBook />} />
           <Route path="favorites" element={<Favorites />} /> {/* Use Favorites component */}
+          <Route 
+            path="admin/dashboard"
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            }
+          />
         </Route>
       </Routes>
     </AnimatePresence>

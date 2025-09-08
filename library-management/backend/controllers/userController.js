@@ -43,6 +43,9 @@ export const loginUser = async (req, res) => {
 
     const user = await User.findOne({ email });
     if (user && (await bcrypt.compare(password, user.password))) {
+      if (user.role === 'admin') {
+        return res.status(403).json({ message: "Admin login is not allowed here. Please use the admin login page." });
+      }
       res.json({
         _id: user.id,
         name: user.name,
@@ -118,6 +121,41 @@ export const getFavorites = async (req, res) => {
     }
 
     res.status(200).json(user.favorites);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Đăng nhập admin
+export const loginAdmin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+    if (user && (await bcrypt.compare(password, user.password))) {
+      if (user.role !== 'admin') {
+        return res.status(403).json({ message: "Access denied. Not an admin." });
+      }
+      res.json({
+        _id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        token: jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1d" }),
+      });
+    } else {
+      res.status(400).json({ message: "Invalid email or password" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get all users (admin only)
+export const getUsers = async (req, res) => {
+  try {
+    const users = await User.find({}).select('-password');
+    res.json(users);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
