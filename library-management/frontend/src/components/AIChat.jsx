@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { getAIChatResponse } from '../services/api';
 
 const AIChat = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -22,7 +23,7 @@ const AIChat = () => {
         setMessages([
             {
                 sender: 'ai',
-                text: "Hello! I'm your friendly library assistant. How can I help you find the perfect book today?",
+                text: "Hello! I'm your friendly library assistant. Ask me about our books, authors, and more!",
             },
         ]);
     }
@@ -38,45 +39,18 @@ const AIChat = () => {
     setIsLoading(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/ai/suggest', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ prompt: input }),
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to get a response from the assistant.');
-      }
-
-      const data = await res.json();
+      const data = await getAIChatResponse(input, token);
       const aiMessage = { 
         sender: 'ai', 
-        text: data.suggestion, 
-        book: data.book 
+        text: data.reply, 
       };
       setMessages((prev) => [...prev, aiMessage]);
 
     } catch (error) {
       console.error('AI Chat Error:', error);
-      let errorText = "I'm sorry, I seem to be having some trouble right now. Please try again later.";
-      
-      // Check if the error is from our backend's detailed response
-      if (error.response && error.response.data) {
-        const { message, error: err, error_details } = error.response.data;
-        errorText = `Error: ${message}\nDetails: ${err}`;
-        if(error_details && error_details.error) {
-            errorText += `\nAI API Info: ${error_details.error.message}`
-        }
-      } else if (error.message.includes('Network Error')) {
-        errorText = "Network Error: Could not connect to the server.";
-      }
-
       const errorMessage = { 
         sender: 'ai', 
-        text: errorText
+        text: error.message || "I'm sorry, I seem to be having some trouble right now. Please try again later."
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
@@ -91,7 +65,7 @@ const AIChat = () => {
         <div className="bg-white/80 backdrop-blur-xl w-full h-full rounded-3xl shadow-2xl border border-white/50 flex flex-col">
           {/* Header */}
           <div className="p-4 border-b border-slate-200">
-            <h3 className="font-bold text-lg bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent text-center">AI Book Assistant</h3>
+            <h3 className="font-bold text-lg bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent text-center">AI Library Assistant</h3>
           </div>
 
           {/* Messages */}
@@ -100,12 +74,6 @@ const AIChat = () => {
               <div key={index} className={`flex mb-4 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-xs px-4 py-3 rounded-2xl shadow ${msg.sender === 'user' ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-800'}`}>
                   <p>{msg.text}</p>
-                  {msg.book && (
-                    <div className="mt-2 p-2 bg-slate-200/70 rounded-lg border border-slate-300/50">
-                        <p className="font-bold text-sm">{msg.book.title}</p>
-                        <p className="text-xs">by {msg.book.author}</p>
-                    </div>
-                  )}
                 </div>
               </div>
             ))}
@@ -128,7 +96,7 @@ const AIChat = () => {
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask for a book suggestion..."
+                placeholder="Ask about books, authors, etc..."
                 className="w-full border-2 border-slate-200 p-3 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400"
                 disabled={isLoading}
               />

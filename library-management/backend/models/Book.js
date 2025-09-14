@@ -13,5 +13,8 @@ const bookSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Add a text index to the title and author fields for text search
+bookSchema.index({ title: 'text', author: 'text' });
+
 const Book = mongoose.model("Book", bookSchema);
 export default Book;

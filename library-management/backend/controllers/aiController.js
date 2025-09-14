@@ -6,6 +6,63 @@ import Book from '../models/Book.js';
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 /**
+ * @desc    Handle conversational chat with RAG implementation.
+ * @route   POST /api/ai/chat
+ * @access  Private
+ */
+export const generateChatResponse = async (req, res) => {
+  try {
+    const userMessage = req.body.message;
+
+    if (!userMessage) {
+      return res.status(400).json({ message: 'A message is required.' });
+    }
+
+    // 1. Retrieval: Find relevant books from the database
+    const relevantBooks = await Book.find(
+      { $text: { $search: userMessage } },
+      { score: { $meta: 'textScore' } }
+    ).sort({ score: { $meta: 'textScore' } }).limit(5);
+
+    let context = 'No specific book information found in the library for this query.';
+    if (relevantBooks.length > 0) {
+      context = 'Here is some information from the library that might be relevant:\n' +
+        relevantBooks.map(book => 
+          `Title: ${book.title}, Author: ${book.author}, Published: ${book.publishedYear}, Genre: ${book.genre}`
+        ).join('\n');
+    }
+
+    // 2. Augmentation & 3. Generation
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const prompt = `
+      You are a helpful and friendly library assistant.
+      Your role is to answer user questions based ONLY on the context provided from the library's database.
+      If the context does not contain the answer, state that you do not have that information in the library.
+      Do not make up information or use external knowledge. Be conversational and concise.
+
+      ---\n      Context from database:
+      ${context}
+      ---
+
+      User Question: "${userMessage}"
+
+      Answer:
+    `;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    res.status(200).json({ reply: text });
+
+  } catch (error) {
+    console.error('Error in generateChatResponse:', error);
+    res.status(500).json({ message: 'Error processing your chat request.' });
+  }
+};
+
+
+/**
  * @desc    Get book suggestions from AI based on available books and a user prompt.
  * @route   POST /api/ai/suggest
  * @access  Private
@@ -28,24 +85,24 @@ export const getBookSuggestion = async (req, res) => {
     // 3. Get the user's prompt from the request body (if any)
     const userPrompt = req.body.prompt || 'any good book'; // Default prompt if user provides none
 
-    // 4. Construct the main prompt for the Gemini AI
-    const systemPrompt = `
-      You are a friendly and knowledgeable librarian assistant for our digital library.
-      Your task is to recommend ONE book from the list of available books provided below, based on the user's request.
-      You must only suggest books that are on the list.
-      
-      IMPORTANT: You must respond with only a valid JSON object and nothing else. Do not wrap the JSON in markdown backticks or any other text.
-      The JSON object must have two keys:
-      - "suggestion": A conversational and friendly suggestion, explaining WHY you are recommending this specific book based on the user's prompt. (e.g., "Based on your interest in classic adventures, I'd recommend 'Treasure Island'. It's a timeless tale of pirates and hidden gold that I think you'll love!").
-      - "book": The exact book object {title, author, publishedYear} that you are recommending.
-
-      Here is the list of available books:
-      ---
-      ${bookListString}
-      ---
-
-      The user's request is: "${userPrompt}"
-    `;
+    // 4. Construct the main prompt for the Gemini AI - using a safe method
+    const systemPrompt = [
+      'You are a friendly and knowledgeable librarian assistant for our digital library.',
+      'Your task is to recommend ONE book from the list of available books provided below, based on the user\'s request.',
+      'You must only suggest books that are on the list.',
+      '',
+      'IMPORTANT: You must respond with only a valid JSON object and nothing else. Do not wrap the JSON in markdown backticks or any other text.',
+      'The JSON object must have two keys:',
+      '- "suggestion": A conversational and friendly suggestion, explaining WHY you are recommending this specific book based on the user\'s prompt. (e.g., "Based on your interest in classic adventures, I\'d recommend \'Treasure Island\'. It\'s a timeless tale of pirates and hidden gold that I think you\'ll love!").',
+      '- "book": The exact book object {title, author, publishedYear} that you are recommending.',
+      '',
+      'Here is the list of available books:',
+      '---',
+      bookListString,
+      '---',
+      '',
+      `The user\'s request is: "${userPrompt}"`
+    ].join('\n');
 
     // 5. Call the Gemini API
     const model = genAI.getGenerativeModel({ model: "gemini-pro"});

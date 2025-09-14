@@ -84,3 +84,20 @@ export const getFavoritesApi = async (token) => {
   });
   return res.json();
 };
+
+// AI Chat API
+export const getAIChatResponse = async (message, token) => {
+  const res = await fetch(`${BASE_API_URL}/ai/chat`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ message }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.message || 'Failed to get response from AI assistant');
+  }
+  return res.json();
+};
