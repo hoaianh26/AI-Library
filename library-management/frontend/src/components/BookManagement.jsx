@@ -10,6 +10,7 @@ function BookManagement() {
   const [selectedImageFile, setSelectedImageFile] = useState(null);
   const [selectedZipFile, setSelectedZipFile] = useState(null);
   const [editingBook, setEditingBook] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { token } = useAuth();
 
@@ -38,6 +39,32 @@ function BookManagement() {
       fetchBooks();
     }
   }, [token]);
+
+  const openAddModal = () => {
+    setEditingBook(null);
+    setTitle("");
+    setAuthor("");
+    setYear("");
+    setImageUrl("");
+    setSelectedImageFile(null);
+    setSelectedZipFile(null);
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (book) => {
+    setEditingBook(book);
+    setTitle(book.title);
+    setAuthor(book.author);
+    setYear(book.publishedYear);
+    setImageUrl(book.imageUrl || "");
+    setSelectedImageFile(null);
+    setSelectedZipFile(null);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
 
   const handleImageFileChange = (e) => {
     setSelectedImageFile(e.target.files[0]);
@@ -131,21 +158,14 @@ function BookManagement() {
         setBooks(books.map((book) =>
           book._id === editingBook._id ? responseData : book
         ));
-        setEditingBook(null);
       } else {
         setBooks([...books, responseData]);
       }
+      closeModal();
 
     } catch (err) {
       console.error("Error saving book:", err);
     }
-
-    setTitle("");
-    setAuthor("");
-    setYear("");
-    setImageUrl("");
-    setSelectedImageFile(null);
-    setSelectedZipFile(null);
   };
 
   const handleDeleteBook = async (id) => {
@@ -169,116 +189,115 @@ function BookManagement() {
     }
   };
 
-  const handleEditBook = (book) => {
-    setEditingBook(book);
-    setTitle(book.title);
-    setAuthor(book.author);
-    setYear(book.publishedYear);
-    setImageUrl(book.imageUrl || "");
-  };
-
   return (
     <>
-      <form
-        onSubmit={handleSubmit}
-        className="max-w-lg mx-auto mb-12 relative z-10"
-      >
-        <div className="bg-white/70 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-white/50 hover:shadow-3xl transition-all duration-500 hover:bg-white/80">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-xl font-bold shadow-lg">
-              {editingBook ? "✏️" : "➕"}
-            </div>
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              {editingBook ? "Edit Book" : "Add New Book"}
-            </h2>
-          </div>
-
-          <div className="space-y-5">
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Book Title</label>
-              <input
-                type="text"
-                placeholder="Enter book title..."
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full border-2 border-slate-200 p-4 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Author</label>
-              <input
-                type="text"
-                placeholder="Enter author name..."
-                value={author}
-                onChange={(e) => setAuthor(e.target.value)}
-                className="w-full border-2 border-slate-200 p-4 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Published Year</label>
-              <input
-                type="number"
-                placeholder="2024"
-                value={year}
-                onChange={(e) => setYear(e.target.value)}
-                className="w-full border-2 border-slate-200 p-4 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Book Cover Image</label>
-              <input
-                type="file"
-                onChange={handleImageFileChange}
-                className="w-full border-2 border-slate-200 p-4 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-gradient-to-r file:from-indigo-500 file:to-purple-600 file:text-white file:font-semibold hover:file:from-indigo-600 hover:file:to-purple-700"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Book Content (HTML Zip)</label>
-              <input
-                type="file"
-                onChange={handleZipFileChange}
-                className="w-full border-2 border-slate-200 p-4 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-gradient-to-r file:from-indigo-500 file:to-purple-600 file:text-white file:font-semibold hover:file:from-indigo-600 hover:file:to-purple-700"
-              />
-            </div>
-          </div>
-
-          <div className="flex gap-3 mt-8">
-            <button
-              type="submit"
-              className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-4 rounded-2xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50">
+          <div className="w-full max-w-lg bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 m-4">
+            <form
+              onSubmit={handleSubmit}
+              className="p-8"
             >
-              {editingBook ? "Update Book" : "➕ Add Book"}
-            </button>
-            {editingBook && (
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingBook(null);
-                  setTitle("");
-                  setAuthor("");
-                  setYear("");
-                  setImageUrl("");
-                  setSelectedImageFile(null);
-                  setSelectedZipFile(null);
-                }}
-                className="px-6 bg-gradient-to-r from-slate-400 to-slate-500 text-white p-4 rounded-2xl hover:from-slate-500 hover:to-slate-600 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-              >
-                Cancel
-              </button>
-            )}
+              <div className="flex items-center justify-between gap-3 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-xl font-bold shadow-lg">
+                    {editingBook ? "✏️" : "➕"}
+                  </div>
+                  <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                    {editingBook ? "Edit Book" : "Add New Book"}
+                  </h2>
+                </div>
+                <button type="button" onClick={closeModal} className="w-10 h-10 rounded-full bg-white/50 hover:bg-white/80 transition-all duration-200 text-slate-500 hover:text-slate-700 flex items-center justify-center">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+
+              <div className="space-y-5 max-h-[70vh] overflow-y-auto pr-2">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Book Title</label>
+                  <input
+                    type="text"
+                    placeholder="Enter book title..."
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full border-2 border-slate-200 p-4 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Author</label>
+                  <input
+                    type="text"
+                    placeholder="Enter author name..."
+                    value={author}
+                    onChange={(e) => setAuthor(e.target.value)}
+                    className="w-full border-2 border-slate-200 p-4 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Published Year</label>
+                  <input
+                    type="number"
+                    placeholder="2024"
+                    value={year}
+                    onChange={(e) => setYear(e.target.value)}
+                    className="w-full border-2 border-slate-200 p-4 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Book Cover Image</label>
+                  <input
+                    type="file"
+                    onChange={handleImageFileChange}
+                    className="w-full border-2 border-slate-200 p-4 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-gradient-to-r file:from-indigo-500 file:to-purple-600 file:text-white file:font-semibold hover:file:from-indigo-600 hover:file:to-purple-700"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Book Content (HTML Zip)</label>
+                  <input
+                    type="file"
+                    onChange={handleZipFileChange}
+                    className="w-full border-2 border-slate-200 p-4 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-gradient-to-r file:from-indigo-500 file:to-purple-600 file:text-white file:font-semibold hover:file:from-indigo-600 hover:file:to-purple-700"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-8">
+                <button
+                  type="submit"
+                  className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-4 rounded-2xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                >
+                  {editingBook ? "Update Book" : "➕ Add Book"}
+                </button>
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="px-6 bg-gradient-to-r from-slate-400 to-slate-500 text-white p-4 rounded-2xl hover:from-slate-500 hover:to-slate-600 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-      </form>
+      )}
 
       <div className="max-w-6xl mx-auto relative z-10">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent mb-4">
-            📚 Book Management
-          </h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+              📚 Book Management
+            </h2>
+            <button 
+              onClick={openAddModal}
+              className="px-6 py-3 rounded-2xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white"
+            >
+              ➕ Add New Book
+            </button>
+          </div>
           <p className="text-slate-600 text-lg">
             Manage your digital library. You have ${books.length} books.
           </p>
@@ -325,7 +344,7 @@ function BookManagement() {
                         </a>
                       )}
                       <button
-                        onClick={() => handleEditBook(book)}
+                        onClick={() => openEditModal(book)}
                         className="bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 px-3 py-2 rounded-lg hover:from-amber-200 hover:to-orange-200 transition-all duration-300 font-semibold text-xs shadow-sm"
                       >
                         Edit

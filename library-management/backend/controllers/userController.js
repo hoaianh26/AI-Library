@@ -155,7 +155,44 @@ export const loginAdmin = async (req, res) => {
 export const getUsers = async (req, res) => {
   try {
     const users = await User.find({}).select('-password');
-    res.json(users);
+
+
+// Update user (admin only)
+export const updateUser = async (req, res) => {
+  try {
+    const { name, email, role, password } = req.body;
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Prevent editing of other admins
+    if (user.role === 'admin') {
+      return res.status(403).json({ message: "Cannot modify an admin account." });
+    }
+
+    user.name = name || user.name;
+    user.email = email || user.email;
+    user.role = role || user.role;
+
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(password, salt);
+    }
+
+    const updatedUser = await user.save();
+
+    res.json({
+      _id: updatedUser.id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      gender: updatedUser.gender,
+      address: updatedUser.address,
+      createdAt: updatedUser.createdAt,
+    });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
