@@ -14,6 +14,7 @@ import { AuthProvider } from './context/AuthContext.jsx';
 import BookDetails from './components/BookDetails.jsx';
 import EditBook from './components/EditBook.jsx';
 import Favorites from './components/Favorites.jsx'; // Import Favorites
+import History from './components/History.jsx'; // Import History
 import Layout from './components/Layout'; // Import the new Layout
 import './styles/pageAnimations.css';
 
@@ -40,6 +41,7 @@ const AppRoutes = () => {
           <Route path="books/:id" element={<BookDetails />} />
           <Route path="edit-book/:id" element={<EditBook />} />
           <Route path="favorites" element={<Favorites />} /> {/* Use Favorites component */}
+          <Route path="history" element={<History />} />
           <Route 
             path="admin/dashboard"
             element={

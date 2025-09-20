@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from './context/AuthContext';
 import { Link } from 'react-router-dom';
-import AIChat from './components/AIChat';
 
 function App() {
   const [books, setBooks] = useState([]);
@@ -88,7 +87,6 @@ function App() {
           )}
         </div>
       </div>
-      {user && <AIChat />}
     </div>
   );
 }

@@ -8,7 +8,6 @@ import cors from "cors";
 import bookRoutes from "./routes/bookRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
-import aiRoutes from "./routes/aiRoutes.js";
 
 const app = express();
 
@@ -21,7 +20,6 @@ app.use('/public', express.static('public'));
 app.use("/api/books", bookRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/ai", aiRoutes);
 
 // Cấu hình PORT
 const PORT = process.env.PORT || 5000;

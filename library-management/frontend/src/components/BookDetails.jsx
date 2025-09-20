@@ -53,6 +53,28 @@ const BookDetails = () => {
     }
   }, [id, token, user]);
 
+  // Log viewing history
+  useEffect(() => {
+    const logHistory = async () => {
+      if (user && user.role !== 'admin' && book) {
+        try {
+          await fetch(`${API_URL}/api/users/history/add`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ bookId: book._id }),
+          });
+        } catch (err) {
+          console.error("Failed to log history:", err);
+        }
+      }
+    };
+
+    logHistory();
+  }, [book, user, token]);
+
   // Auto hide favorites popup after 3 seconds
   useEffect(() => {
     if (showFavoritesPopup) {

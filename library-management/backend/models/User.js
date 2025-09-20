@@ -32,6 +32,18 @@ const userSchema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Book'
       }
+    ],
+    viewHistory: [
+      {
+        book: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Book'
+        },
+        viewedAt: {
+          type: Date,
+          default: Date.now
+        }
+      }
     ]
   },
   { timestamps: true }

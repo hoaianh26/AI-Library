@@ -71,7 +71,6 @@ export const addFavorite = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Check if book is already favorited
     if (user.favorites.includes(bookId)) {
       return res.status(400).json({ message: "Book already in favorites" });
     }
@@ -95,7 +94,6 @@ export const removeFavorite = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Check if book is in favorites
     if (!user.favorites.includes(bookId)) {
       return res.status(400).json({ message: "Book not in favorites" });
     }
@@ -114,7 +112,7 @@ export const removeFavorite = async (req, res) => {
 // Get all favorite books for the user
 export const getFavorites = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).populate('favorites'); // Populate to get full book details
+    const user = await User.findById(req.user.id).populate('favorites');
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -155,7 +153,11 @@ export const loginAdmin = async (req, res) => {
 export const getUsers = async (req, res) => {
   try {
     const users = await User.find({}).select('-password');
-
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 // Update user (admin only)
 export const updateUser = async (req, res) => {
@@ -167,7 +169,6 @@ export const updateUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Prevent editing of other admins
     if (user.role === 'admin') {
       return res.status(403).json({ message: "Cannot modify an admin account." });
     }
@@ -192,6 +193,57 @@ export const updateUser = async (req, res) => {
       address: updatedUser.address,
       createdAt: updatedUser.createdAt,
     });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Add book to viewing history
+export const addBookToHistory = async (req, res) => {
+  try {
+    const { bookId } = req.body;
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!Array.isArray(user.viewHistory)) {
+      user.viewHistory = [];
+    }
+
+    user.viewHistory = user.viewHistory.filter(
+      (entry) => entry.book.toString() !== bookId
+    );
+
+    user.viewHistory.unshift({ book: bookId, viewedAt: new Date() });
+
+    if (user.viewHistory.length > 50) {
+      user.viewHistory = user.viewHistory.slice(0, 50);
+    }
+
+    await user.save();
+    res.status(200).json({ message: "Book added to viewing history" });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get user's viewing history
+export const getViewHistory = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).populate({
+      path: 'viewHistory.book',
+      model: 'Book'
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json(user.viewHistory);
 
   } catch (error) {
     res.status(500).json({ message: error.message });
