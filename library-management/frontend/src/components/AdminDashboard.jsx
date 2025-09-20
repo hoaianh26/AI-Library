@@ -290,66 +290,64 @@ function AdminDashboard() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-          {books.map((book, index) => (
-            <div
-              key={book._id}
-              className="group relative bg-white/70 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:bg-white/80 flex flex-col w-full"
-              style={{
-                animationDelay: `${index * 100}ms`
-              }}
-            >
-              <div className="relative overflow-hidden">
-                <img
-                  src={book.imageUrl ? `${API_URL}${book.imageUrl}` : 'https://via.placeholder.com/300x400/6366f1/white?text=No+Cover'}
-                  alt={book.title}
-                  className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </div>
-              <div className="p-6 flex-grow flex flex-col">
-                <div className="flex-grow">
-                  <h3 className="font-bold text-xl text-slate-800 mb-2 line-clamp-2 group-hover:text-indigo-600 transition-colors duration-300">
-                    {book.title}
-                  </h3>
-                  <p className="text-slate-600 font-medium mb-1">by {book.author}</p>
-                  <p className="text-slate-500 text-sm mb-2">Published {book.publishedYear}</p>
-                  <p className="text-slate-400 text-xs">
-                    Added {new Date(book.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                
-                {book.htmlContentPath && (
-                  <a
-                    href={`${API_URL}${book.htmlContentPath}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 mt-4 text-indigo-600 hover:text-indigo-700 font-semibold text-sm transition-colors duration-300"
-                  >
-                    <span>📖 Read Online</span>
-                    <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                    </svg>
-                  </a>
-                )}
-
-                <div className="flex gap-2 mt-4 pt-4 border-t border-slate-200">
-                  <button
-                    onClick={() => handleEditBook(book)}
-                    className="flex-1 bg-gradient-to-r from-amber-400 to-orange-500 text-white px-4 py-2 rounded-xl hover:from-amber-500 hover:to-orange-600 transition-all duration-300 font-semibold text-sm shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-                  >
-                    ✏️ Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteBook(book._id)}
-                    className="flex-1 bg-gradient-to-r from-red-400 to-rose-500 text-white px-4 py-2 rounded-xl hover:from-red-500 hover:to-rose-600 transition-all duration-300 font-semibold text-sm shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-                  >
-                    🗑️ Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+        <div className="bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden">
+          <table className="w-full text-left">
+            <thead className="border-b border-slate-200">
+              <tr>
+                <th className="p-6 text-sm font-semibold text-slate-600">Cover</th>
+                <th className="p-6 text-sm font-semibold text-slate-600">Title</th>
+                <th className="p-6 text-sm font-semibold text-slate-600">Author</th>
+                <th className="p-6 text-sm font-semibold text-slate-600">Year</th>
+                <th className="p-6 text-sm font-semibold text-slate-600">Date Added</th>
+                <th className="p-6 text-sm font-semibold text-slate-600 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {books.map((book) => (
+                <tr key={book._id} className="border-b border-slate-200 last:border-0 hover:bg-slate-50/50 transition-colors duration-200">
+                  <td className="p-4">
+                    <img
+                      src={book.imageUrl ? `${API_URL}${book.imageUrl}` : 'https://via.placeholder.com/80x120/6366f1/white?text=No+Cover'}
+                      alt={book.title}
+                      className="w-12 h-auto object-cover rounded-md shadow-sm"
+                    />
+                  </td>
+                  <td className="p-4 font-semibold text-slate-800">{book.title}</td>
+                  <td className="p-4 text-slate-600">{book.author}</td>
+                  <td className="p-4 text-slate-600">{book.publishedYear}</td>
+                  <td className="p-4 text-slate-500 text-sm">
+                    {new Date(book.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="p-4 text-right">
+                    <div className="flex gap-2 justify-end">
+                      {book.htmlContentPath && (
+                        <a
+                          href={`${API_URL}${book.htmlContentPath}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 px-3 py-2 rounded-lg hover:from-indigo-200 hover:to-purple-200 transition-all duration-300 font-semibold text-xs shadow-sm"
+                        >
+                          Read
+                        </a>
+                      )}
+                      <button
+                        onClick={() => handleEditBook(book)}
+                        className="bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 px-3 py-2 rounded-lg hover:from-amber-200 hover:to-orange-200 transition-all duration-300 font-semibold text-xs shadow-sm"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteBook(book._id)}
+                        className="bg-gradient-to-r from-red-100 to-rose-100 text-red-700 px-3 py-2 rounded-lg hover:from-red-200 hover:to-rose-200 transition-all duration-300 font-semibold text-xs shadow-sm"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
         {books.length === 0 && (
