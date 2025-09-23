@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link, NavLink } from 'react-router-dom';
 import { searchBooks } from '../services/bookService';
 
-function Navbar() {
+function Navbar({ isSidebarOpen }) {
   const { user, token, logout } = useAuth();
   const navigate = useNavigate();
   
@@ -81,7 +81,10 @@ function Navbar() {
     `px-4 py-2 rounded-lg transition-colors duration-200 ${isActive ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-slate-600 hover:bg-indigo-50 hover:text-indigo-600'}`;
 
   return (
-    <nav className="fixed top-0 left-0 w-full z-50">
+    <nav 
+      className="fixed top-0 left-0 w-full z-40 transition-all duration-500 ease-in-out"
+      style={{ paddingLeft: isSidebarOpen ? '256px' : '96px' }}
+    >
       <div className={`transition-all duration-300 ${isScrolled ? 'bg-white/95 backdrop-blur-2xl border-b border-white/30 shadow-2xl' : 'bg-white/85 backdrop-blur-xl border-b border-white/20 shadow-lg'}`}>
         <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-60"></div>
         <div className="container mx-auto px-6 py-4">
@@ -108,8 +111,6 @@ function Navbar() {
                 <>
                   {user.role !== 'admin' && (
                     <>
-                      <NavLink to="/favorites" className={getLinkClass}>Favorites</NavLink>
-                      <NavLink to="/history" className={getLinkClass}>History</NavLink>
                     </>
                   )}
                   <div className="relative" ref={userMenuRef}>
