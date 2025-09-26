@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import PageTransition from './PageTransition';
+import PageTransition from '../components/PageTransition';
 
 function Register() {
   const [name, setName] = useState('');

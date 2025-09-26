@@ -4,18 +4,18 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { AnimatePresence } from 'framer-motion';
 import './index.css';
 import App from './App.jsx';
-import Register from './components/Register.jsx';
-import Login from './components/Login.jsx';
-import AdminLogin from './components/AdminLogin.jsx';
-import PrivateRoute from './components/PrivateRoute.jsx';
-import AdminRoute from './components/AdminRoute.jsx';
-import AdminDashboard from './components/AdminDashboard.jsx';
+import Register from './pages/Register.jsx';
+import Login from './pages/Login.jsx';
+import AdminLogin from './pages/AdminLogin.jsx';
+import PrivateRoute from './routes/PrivateRoute.jsx';
+import AdminRoute from './routes/AdminRoute.jsx';
+import AdminDashboard from './pages/AdminDashboard.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
-import BookDetails from './components/BookDetails.jsx';
-import EditBook from './components/EditBook.jsx';
-import Favorites from './components/Favorites.jsx'; // Import Favorites
-import History from './components/History.jsx'; // Import History
-import Layout from './components/Layout'; // Import the new Layout
+import BookDetails from './pages/BookDetails.jsx';
+import EditBook from './pages/EditBook.jsx';
+import Favorites from './pages/Favorites.jsx'; // Import Favorites
+import History from './pages/History.jsx'; // Import History
+import Layout from './layouts/Layout'; // Import the new Layout
 import './styles/pageAnimations.css';
 
 const AppRoutes = () => {

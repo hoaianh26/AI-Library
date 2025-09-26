@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getBook, deleteBook, addFavorite, removeFavorite, getFavorites } from '../services/bookService';
 import { useAuth } from '../context/AuthContext';
-import PageTransition from './PageTransition';
+import PageTransition from '../components/PageTransition';
 
 const BookDetails = () => {
   const [book, setBook] = useState(null);
@@ -298,11 +298,21 @@ const BookDetails = () => {
                         <span>{book.publishedYear}</span>
                       </div>
                     </div>
-                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-2xl border border-purple-100">
-                      <div className="flex items-center gap-2 text-slate-700">
+                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-2xl border border-purple-100 md:col-span-2">
+                      <div className="flex items-center gap-2 text-slate-700 mb-3">
                         <span className="text-purple-500">🏷️</span>
-                        <span className="font-semibold">Genre:</span>
-                        <span>{book.genre || 'N/A'}</span>
+                        <span className="font-semibold">Categories:</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {book.categories && book.categories.length > 0 ? (
+                          book.categories.map((category, index) => (
+                            <span key={index} className="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-1 rounded-full">
+                              {category}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-slate-500">N/A</span>
+                        )}
                       </div>
                     </div>
                     <div className="bg-gradient-to-r from-cyan-50 to-blue-50 p-4 rounded-2xl border border-cyan-100 md:col-span-2">

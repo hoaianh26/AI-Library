@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
-import PageTransition from './PageTransition';
+import PageTransition from '../components/PageTransition';
 
 function History() {
   const [history, setHistory] = useState([]);

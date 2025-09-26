@@ -1,4 +1,4 @@
-import UserList from './UserList';
+import UserList from '../components/UserList';
 
 function UserManagement() {
   return (

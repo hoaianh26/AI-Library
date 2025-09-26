@@ -1,6 +1,8 @@
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
+  const { user } = useAuth();
   const getLinkClass = ({ isActive }) =>
     `flex items-center p-3 rounded-xl transition-all duration-300 group relative overflow-hidden ${
       isActive 
@@ -119,19 +121,21 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
               )}
             </NavLink>
 
-            <NavLink to="/add-book" className={getLinkClass}>
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/10 backdrop-blur-sm">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                </svg>
-              </div>
-              {isOpen && (
-                <div className="ml-3 flex-1">
-                  <span className="font-semibold">Add Book</span>
-                  <p className="text-xs opacity-70">New addition</p>
+            {user && user.role === 'admin' && (
+              <NavLink to="/admin/dashboard" className={getLinkClass}>
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/10 backdrop-blur-sm">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                  </svg>
                 </div>
-              )}
-            </NavLink>
+                {isOpen && (
+                  <div className="ml-3 flex-1">
+                    <span className="font-semibold">Admin Dashboard</span>
+                    <p className="text-xs opacity-70">Manage books & users</p>
+                  </div>
+                )}
+              </NavLink>
+            )}
 
             {/* Divider */}
             {isOpen && <div className="border-t border-white/20 my-4"></div>}

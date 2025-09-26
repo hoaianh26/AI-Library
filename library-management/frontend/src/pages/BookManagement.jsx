@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useAuth } from '../context/AuthContext';
+import { CATEGORIES } from '../constants/categories';
 
 function BookManagement() {
   const [books, setBooks] = useState([]);
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [year, setYear] = useState("");
+  const [categories, setCategories] = useState([]);
   const [imageUrl, setImageUrl] = useState("");
   const [selectedImageFile, setSelectedImageFile] = useState(null);
   const [selectedZipFile, setSelectedZipFile] = useState(null);
@@ -45,6 +47,7 @@ function BookManagement() {
     setTitle("");
     setAuthor("");
     setYear("");
+    setCategories([]);
     setImageUrl("");
     setSelectedImageFile(null);
     setSelectedZipFile(null);
@@ -56,6 +59,7 @@ function BookManagement() {
     setTitle(book.title);
     setAuthor(book.author);
     setYear(book.publishedYear);
+    setCategories(book.categories || []);
     setImageUrl(book.imageUrl || "");
     setSelectedImageFile(null);
     setSelectedZipFile(null);
@@ -131,6 +135,7 @@ function BookManagement() {
       title,
       author,
       publishedYear: year,
+      categories: categories,
       imageUrl: uploadedImageUrl,
       htmlContentPath: uploadedHtmlContentPath,
     };
@@ -189,6 +194,14 @@ function BookManagement() {
     }
   };
 
+  const handleCategoryChange = (category) => {
+    setCategories(prev => 
+      prev.includes(category) 
+        ? prev.filter(c => c !== category) 
+        : [...prev, category]
+    );
+  };
+
   return (
     <>
       {isModalOpen && (
@@ -244,6 +257,25 @@ function BookManagement() {
                     onChange={(e) => setYear(e.target.value)}
                     className="w-full border-2 border-slate-200 p-4 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Categories</label>
+                  <div className="max-h-40 overflow-y-auto p-4 border-2 border-slate-200 rounded-2xl bg-white/80">
+                    <div className="grid grid-cols-2 gap-4">
+                      {CATEGORIES.map(category => (
+                        <label key={category} className="flex items-center space-x-3">
+                          <input
+                            type="checkbox"
+                            checked={categories.includes(category)}
+                            onChange={() => handleCategoryChange(category)}
+                            className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                          />
+                          <span className="text-slate-700">{category}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
                 <div>
