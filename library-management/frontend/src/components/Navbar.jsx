@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link, NavLink } from 'react-router-dom';
 import { searchBooks } from '../services/bookService';
 
-function Navbar({ isSidebarOpen }) {
+function Navbar() {
   const { user, token, logout } = useAuth();
   const navigate = useNavigate();
   
@@ -11,18 +11,12 @@ function Navbar({ isSidebarOpen }) {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isBoxVisible, setIsBoxVisible] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+  
   const [showUserMenu, setShowUserMenu] = useState(false);
   const searchBoxRef = useRef(null);
   const userMenuRef = useRef(null);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  
 
   useEffect(() => {
     if (searchTerm.trim() === '' || !isBoxVisible) {
@@ -82,10 +76,10 @@ function Navbar({ isSidebarOpen }) {
 
   return (
     <nav 
-      className="fixed top-0 left-0 w-full z-40 transition-all duration-500 ease-in-out"
-      style={{ paddingLeft: isSidebarOpen ? '256px' : '96px' }}
+      className="relative z-20 w-full transition-all duration-500 ease-in-out"
+      
     >
-      <div className={`transition-all duration-300 ${isScrolled ? 'bg-white/95 backdrop-blur-2xl border-b border-white/30 shadow-2xl' : 'bg-white/85 backdrop-blur-xl border-b border-white/20 shadow-lg'}`}>
+      <div className="transition-all duration-300 bg-white/85 backdrop-blur-xl border-b border-white/20 shadow-lg">
         <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-60"></div>
         <div className="container mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
@@ -116,7 +110,7 @@ function Navbar({ isSidebarOpen }) {
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                 </div>
                 {isBoxVisible && (
-                  <div className="absolute mt-3 w-full bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden transform animate-in slide-in-from-top-2 duration-200">
+                  <div className="absolute z-50 mt-3 w-full bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden transform animate-in slide-in-from-top-2 duration-200">
                     {isSearching && <div className="p-4 text-center text-slate-500">Searching...</div>}
                     {!isSearching && searchResults.length === 0 && searchTerm.length > 0 && (
                       <div className="p-4 text-center text-slate-500">No results found.</div>
