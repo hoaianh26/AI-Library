@@ -8,7 +8,7 @@ const BookCard = ({ book, index }) => {
     <Link to={`/books/${book._id}`} className="group relative bg-white/70 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:bg-white/80" style={{ animationDelay: `${index * 100}ms` }}>
       <div className="relative overflow-hidden">
         <img
-          src={book.imageUrl ? `${API_URL}${book.imageUrl}` : 'https://via.placeholder.com/300x400/6366f1/white?text=No+Cover'}
+          src={book.imageUrl ? book.imageUrl : 'https://via.placeholder.com/300x400/6366f1/white?text=No+Cover'}
           alt={book.title}
           className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
         />

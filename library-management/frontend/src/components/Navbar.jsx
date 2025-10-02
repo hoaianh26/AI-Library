@@ -103,7 +103,46 @@ function Navbar({ isSidebarOpen }) {
             </Link>
 
             <div className="flex-grow mx-8 max-w-xl relative" ref={searchBoxRef}>
-              {/* Search bar implementation... */}
+                            <div className="relative w-full">
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  onFocus={() => setIsBoxVisible(true)}
+                  placeholder="Search for books by title or author..."
+                  className="w-full py-3 pl-12 pr-4 bg-white/80 backdrop-blur-sm border-2 border-slate-200/50 rounded-2xl focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all duration-300 shadow-inner"
+                />
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                </div>
+                {isBoxVisible && (
+                  <div className="absolute mt-3 w-full bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden transform animate-in slide-in-from-top-2 duration-200">
+                    {isSearching && <div className="p-4 text-center text-slate-500">Searching...</div>}
+                    {!isSearching && searchResults.length === 0 && searchTerm.length > 0 && (
+                      <div className="p-4 text-center text-slate-500">No results found.</div>
+                    )}
+                    {!isSearching && searchResults.length > 0 && (
+                      <ul className="max-h-96 overflow-y-auto divide-y divide-slate-100">
+                        {searchResults.map((book) => (
+                          <li key={book._id}>
+                            <Link 
+                              to={`/books/${book._id}`} 
+                              onClick={handleResultClick}
+                              className="flex items-center gap-4 p-4 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-200 group"
+                            >
+                              <img src={book.imageUrl || 'https://via.placeholder.com/40x60'} alt={book.title} className="w-10 h-14 object-cover rounded-md shadow-sm group-hover:scale-105 transition-transform duration-200" />
+                              <div>
+                                <p className="font-semibold text-slate-800 group-hover:text-indigo-700">{book.title}</p>
+                                <p className="text-sm text-slate-500">{book.author}</p>
+                              </div>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center space-x-4">

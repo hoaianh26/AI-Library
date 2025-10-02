@@ -352,7 +352,7 @@ function BookManagement() {
                 <tr key={book._id} className="border-b border-slate-200 last:border-0 hover:bg-slate-50/50 transition-colors duration-200">
                   <td className="p-4">
                     <img
-                      src={book.imageUrl ? `${API_URL}${book.imageUrl}` : 'https://via.placeholder.com/80x120/6366f1/white?text=No+Cover'}
+                      src={book.imageUrl ? book.imageUrl : 'https://via.placeholder.com/80x120/6366f1/white?text=No+Cover'}
                       alt={book.title}
                       className="w-12 h-auto object-cover rounded-md shadow-sm"
                     />

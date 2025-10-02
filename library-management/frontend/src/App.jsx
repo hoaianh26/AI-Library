@@ -61,7 +61,7 @@ function App() {
                 >
                   <div className="relative overflow-hidden">
                     <img
-                      src={book.imageUrl ? `${API_URL}${book.imageUrl}` : 'https://via.placeholder.com/300x400/6366f1/white?text=No+Cover'}
+                      src={book.imageUrl ? book.imageUrl : 'https://via.placeholder.com/300x400/6366f1/white?text=No+Cover'}
                       alt={book.title}
                       className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
                     />

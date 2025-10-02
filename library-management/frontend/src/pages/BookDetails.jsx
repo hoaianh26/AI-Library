@@ -53,27 +53,6 @@ const BookDetails = () => {
     }
   }, [id, token, user]);
 
-  // Log viewing history
-  useEffect(() => {
-    const logHistory = async () => {
-      if (user && user.role !== 'admin' && book) {
-        try {
-          await fetch(`${API_URL}/api/users/history/add`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ bookId: book._id }),
-          });
-        } catch (err) {
-          console.error("Failed to log history:", err);
-        }
-      }
-    };
-
-    logHistory();
-  }, [book, user, token]);
 
   // Auto hide favorites popup after 3 seconds
   useEffect(() => {
@@ -123,6 +102,23 @@ const BookDetails = () => {
     } catch (err) {
       console.error("Error toggling favorite:", err);
       showFavoritesNotification('Failed to update favorites. Please try again.', 'error');
+    }
+  };
+
+  const handleReadOnlineClick = async () => {
+    if (user && user.role !== 'admin' && book) {
+      try {
+        await fetch(`${API_URL}/api/users/history/add`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ bookId: book._id }),
+        });
+      } catch (err) {
+        console.error("Failed to log history when clicking Read Online:", err);
+      }
     }
   };
 
@@ -260,7 +256,7 @@ const BookDetails = () => {
                   <div className="relative group">
                     <div className={`transition-all duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}>
                       <img
-                        src={book.imageUrl ? `${API_URL}${book.imageUrl}` : 'https://via.placeholder.com/400x600/6366f1/white?text=No+Cover'}
+                        src={book.imageUrl ? book.imageUrl : 'https://via.placeholder.com/400x600/6366f1/white?text=No+Cover'}
                         alt={book.title}
                         className="w-full h-auto object-cover rounded-2xl shadow-2xl group-hover:shadow-3xl transition-all duration-500 transform group-hover:scale-105"
                         onLoad={() => setImageLoaded(true)}
@@ -341,6 +337,23 @@ const BookDetails = () => {
 
                   {/* Action Buttons */}
                   <div className="space-y-4">
+                    {/* Read Online Button */}
+                    {book.htmlContentPath && (
+                      <a
+                        href={`${API_URL}${book.htmlContentPath}`}
+                        onClick={handleReadOnlineClick}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group inline-flex items-center justify-center gap-3 w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white p-4 rounded-2xl hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 transition-all duration-300 font-semibold text-lg"
+                      >
+                        <span className="text-2xl group-hover:scale-110 transition-transform duration-300">📖</span>
+                        <span className="text-white">Read Online</span>
+                        <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                    )}
+
                     {/* Favorite Button */}
                     {user && user.role !== 'admin' && (
                       <button
@@ -354,22 +367,6 @@ const BookDetails = () => {
                         <span className="text-2xl group-hover:scale-110 transition-transform duration-300">{isFavorited ? '❤️' : '🤍'}</span>
                         <span>{isFavorited ? 'Remove from Favorites' : 'Add to Favorites'}</span>
                       </button>
-                    )}
-
-                    {/* Read Online Button */}
-                    {book.htmlContentPath && (
-                      <a
-                        href={`${API_URL}${book.htmlContentPath}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group inline-flex items-center justify-center gap-3 w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white p-4 rounded-2xl hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 transition-all duration-300 font-semibold text-lg"
-                      >
-                        <span className="text-2xl group-hover:scale-110 transition-transform duration-300">📖</span>
-                        <span className="text-white">Read Online</span>
-                        <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                      </a>
                     )}
 
                     {/* Admin Actions */}

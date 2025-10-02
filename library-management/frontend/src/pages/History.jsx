@@ -64,7 +64,7 @@ function History() {
                 <Link to={`/books/${entry.book._id}`} key={entry._id} className="block">
                   <div className="bg-white/70 backdrop-blur-xl rounded-3xl shadow-lg border border-white/50 p-6 hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 hover:bg-white/80 flex items-center gap-6">
                     <img
-                      src={entry.book.imageUrl ? `${API_URL}${entry.book.imageUrl}` : 'https://via.placeholder.com/100x150/6366f1/white?text=No+Cover'}
+                      src={entry.book.imageUrl ? entry.book.imageUrl : 'https://via.placeholder.com/100x150/6366f1/white?text=No+Cover'}
                       alt={entry.book.title}
                       className="w-20 h-28 object-cover rounded-lg shadow-md"
                     />
