@@ -86,14 +86,14 @@ export const getFavoritesApi = async (token) => {
 };
 
 // AI Chat API
-export const getAIChatResponse = async (message, token) => {
-  const res = await fetch(`${BASE_API_URL}/ai/chat`, {
+export const getAIChatResponse = async (prompt, token) => { // Changed 'message' to 'prompt' for consistency
+  const res = await fetch(`${BASE_API_URL}/gemini`, { // Changed '/ai/chat' to '/gemini'
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ prompt }), // Changed 'message' to 'prompt'
   });
   if (!res.ok) {
     const errorData = await res.json();

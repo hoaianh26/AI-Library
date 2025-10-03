@@ -42,6 +42,21 @@ router.get("/", protect, async (req, res) => {
   }
 });
 
+// GET books by category
+router.get("/category/:categoryName", protect, async (req, res) => {
+  try {
+    // The category name from URL is slugified (e.g., "science-fiction").
+    // We perform a case-insensitive search for the original category name.
+    const categoryName = req.params.categoryName.replace(/-/g, ' ');
+    const books = await Book.find({ 
+      categories: { $regex: new RegExp('^' + categoryName + '$', 'i') } 
+    });
+    res.json(books);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // GET single book by id (accessible to all authenticated users)
 router.get("/:id", protect, async (req, res) => {
   try {

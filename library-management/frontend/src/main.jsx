@@ -15,6 +15,8 @@ import BookDetails from './pages/BookDetails.jsx';
 import EditBook from './pages/EditBook.jsx';
 import Favorites from './pages/Favorites.jsx'; // Import Favorites
 import History from './pages/History.jsx'; // Import History
+import CategoryPage from './pages/CategoryPage.jsx'; // Import CategoryPage
+import AIPage from './pages/AIPage.jsx'; // Import AIPage
 import Layout from './layouts/Layout'; // Import the new Layout
 import './styles/pageAnimations.css';
 
@@ -42,6 +44,8 @@ const AppRoutes = () => {
           <Route path="edit-book/:id" element={<EditBook />} />
           <Route path="favorites" element={<Favorites />} /> {/* Use Favorites component */}
           <Route path="history" element={<History />} />
+          <Route path="ai" element={<AIPage />} /> {/* New AI Page Route */}
+          <Route path="category/:categoryName" element={<CategoryPage />} /> {/* New Category Page Route */}
           <Route 
             path="admin/dashboard"
             element={

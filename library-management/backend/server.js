@@ -1,6 +1,5 @@
 // server.js
-import dotenv from "dotenv";
-dotenv.config();
+import './config.js'; // Import the config file first to load environment variables
 
 import express from "express";
 import mongoose from "mongoose";
@@ -8,8 +7,12 @@ import cors from "cors";
 import bookRoutes from "./routes/bookRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import geminiRoutes from "./routes/geminiRoutes.js"; // Import geminiRoutes
 
 const app = express();
+
+// The GEMINI_API_KEY check is now in config.js
+// No need for dotenv.config() here anymore
 
 // Middleware
 app.use(cors());
@@ -20,6 +23,7 @@ app.use('/public', express.static('public'));
 app.use("/api/books", bookRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/gemini", geminiRoutes); // Use geminiRoutes
 
 // Cấu hình PORT
 const PORT = process.env.PORT || 5000;
