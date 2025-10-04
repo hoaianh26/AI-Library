@@ -5,8 +5,10 @@ import TopMenu from '../components/TopMenu';
 const Layout = () => {
   return (
     <div>
-      <Navbar />
-      <TopMenu />
+      <div className="sticky top-0 z-50">
+        <Navbar />
+        <TopMenu />
+      </div>
       <main>
         <Outlet />
       </main>
