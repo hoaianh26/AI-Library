@@ -17,7 +17,7 @@ const AIPage = () => {
       setIsLoading(true); // Set loading to true
 
       try {
-        const aiResponse = await getAIChatResponse(input, token); // Call getAIChatResponse with token
+        const aiResponse = await getAIChatResponse(input, messages, token); // Call getAIChatResponse with token
         setMessages((prevMessages) => [
           ...prevMessages,
           { text: aiResponse.text, sender: 'ai' }, // Correctly access aiResponse.text

@@ -94,15 +94,21 @@ async function generateContent(req, res) {
     }
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", tools }); // Pass tools to the model
-    const { prompt } = req.body;
+    const { prompt, history } = req.body;
 
     if (!prompt) {
       return res.status(400).json({ message: "Prompt is required" });
     }
 
+    // Format the history for the Gemini API
+    const formattedHistory = history ? history.map(msg => ({
+      role: msg.sender === 'ai' ? 'model' : 'user',
+      parts: [{ text: msg.text }]
+    })) : [];
+
     // Start a chat session
     const chat = model.startChat({
-      history: [], // You might want to pass chat history here for context
+      history: formattedHistory, // Pass the formatted chat history
     });
 
     const result = await chat.sendMessage(prompt); // Use chat.sendMessage
