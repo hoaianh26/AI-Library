@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 // Đăng ký
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password, role, gender, address } = req.body;
+    const { name, email, password, role, gender, address, phoneNumber, dateOfBirth, libraryId, status, membershipType, avatar, favoriteCategories } = req.body;
 
     const userExists = await User.findOne({ email });
     if (userExists) return res.status(400).json({ message: "User already exists" });
@@ -20,6 +20,13 @@ export const registerUser = async (req, res) => {
       role,
       gender,
       address,
+      phoneNumber,
+      dateOfBirth,
+      libraryId,
+      status: status || "active", // Default to active if not provided
+      membershipType: membershipType || "standard", // Default to standard if not provided
+      avatar,
+      favoriteCategories,
     });
 
     res.status(201).json({
@@ -29,6 +36,13 @@ export const registerUser = async (req, res) => {
       role: user.role,
       gender: user.gender,
       address: user.address,
+      phoneNumber: user.phoneNumber,
+      dateOfBirth: user.dateOfBirth,
+      libraryId: user.libraryId,
+      status: user.status,
+      membershipType: user.membershipType,
+      avatar: user.avatar,
+      favoriteCategories: user.favoriteCategories,
       token: jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1d" }),
     });
   } catch (error) {
@@ -245,6 +259,37 @@ export const getViewHistory = async (req, res) => {
 
     res.status(200).json(user.viewHistory);
 
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get user profile
+export const getUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    if (user) {
+      res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        gender: user.gender,
+        address: user.address,
+        phoneNumber: user.phoneNumber,
+        dateOfBirth: user.dateOfBirth,
+        libraryId: user.libraryId,
+        status: user.status,
+        membershipType: user.membershipType,
+        avatar: user.avatar,
+        favoriteCategories: user.favoriteCategories,
+        createdAt: user.createdAt, // Add createdAt
+        favorites: user.favorites,
+        viewHistory: user.viewHistory,
+      });
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

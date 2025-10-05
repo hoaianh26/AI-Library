@@ -27,6 +27,35 @@ const userSchema = new mongoose.Schema(
     address: {
       type: String,
     },
+    phoneNumber: {
+      type: String,
+    },
+    dateOfBirth: {
+      type: Date,
+    },
+    libraryId: {
+      type: String,
+      unique: true,
+      sparse: true, // Allows null values to not violate unique constraint
+    },
+    status: {
+      type: String,
+      enum: ["active", "inactive", "suspended"],
+      default: "active",
+    },
+    membershipType: {
+      type: String,
+      enum: ["standard", "premium"],
+      default: "standard",
+    },
+    avatar: {
+      type: String,
+    },
+    favoriteCategories: [
+      {
+        type: String,
+      },
+    ],
     favorites: [
       {
         type: mongoose.Schema.Types.ObjectId,

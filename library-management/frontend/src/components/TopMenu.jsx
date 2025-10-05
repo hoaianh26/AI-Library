@@ -1,13 +1,15 @@
 import { NavLink } from 'react-router-dom';
 import { useState, useRef } from 'react';
+import { Home, Heart, Clock, Sparkles, Grid3x3, User } from 'lucide-react';
 import { CATEGORIES } from '../constants/categories';
 
 const TopMenu = () => {
   const menuItems = [
-    { name: 'Home', path: '/' },
-    { name: 'Favorites', path: '/favorites' },
-    { name: 'History', path: '/history' },
-    { name: 'AI', path: '/ai' },
+    { name: 'Home', path: '/', icon: Home },
+    { name: 'Favorites', path: '/favorites', icon: Heart },
+    { name: 'History', path: '/history', icon: Clock },
+    { name: 'AI', path: '/ai', icon: Sparkles },
+    { name: 'Profile', path: '/profile', icon: User },
   ];
 
   const [isCategoriesOpen, setCategoriesOpen] = useState(false);
@@ -25,7 +27,7 @@ const TopMenu = () => {
   };
 
   const getLinkClass = ({ isActive }) =>
-    `relative px-4 py-2 text-sm font-medium rounded-md transition-all duration-300 overflow-hidden ${
+    `relative px-4 py-2 text-sm font-medium rounded-md transition-all duration-300 overflow-hidden flex items-center gap-2 ${
       isActive
         ? 'bg-indigo-100 text-indigo-700 shadow-md scale-105'
         : 'text-slate-600 hover:bg-gray-200 hover:text-slate-900 hover:scale-105'
@@ -53,17 +55,21 @@ const TopMenu = () => {
             }}
           />
 
-          {menuItems.map((item, index) => (
-            <NavLink 
-              to={item.path} 
-              key={item.name} 
-              className={getLinkClass} 
-              end
-            >
-              <span className="relative z-10">{item.name}</span>
-              <span className="absolute inset-0 bg-gradient-to-r from-indigo-500/0 via-indigo-500/10 to-indigo-500/0 opacity-0 hover:opacity-100 transition-opacity duration-500"></span>
-            </NavLink>
-          ))}
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink 
+                to={item.path} 
+                key={item.name} 
+                className={getLinkClass} 
+                end
+              >
+                <Icon className="w-4 h-4 relative z-10" />
+                <span className="relative z-10">{item.name}</span>
+                <span className="absolute inset-0 bg-gradient-to-r from-indigo-500/0 via-indigo-500/10 to-indigo-500/0 opacity-0 hover:opacity-100 transition-opacity duration-500"></span>
+              </NavLink>
+            );
+          })}
 
           {/* Categories Dropdown */}
           <div 
@@ -71,10 +77,11 @@ const TopMenu = () => {
             onMouseEnter={() => setCategoriesOpen(true)}
             onMouseLeave={() => setCategoriesOpen(false)}
           >
-            <button className="relative px-4 py-2 text-sm font-medium text-slate-600 hover:bg-gray-200 hover:text-slate-900 rounded-md transition-all duration-300 flex items-center hover:scale-105 overflow-hidden">
+            <button className="relative px-4 py-2 text-sm font-medium text-slate-600 hover:bg-gray-200 hover:text-slate-900 rounded-md transition-all duration-300 flex items-center gap-2 hover:scale-105 overflow-hidden">
+              <Grid3x3 className="w-4 h-4 relative z-10" />
               <span className="relative z-10">Categories</span>
               <svg 
-                className="relative z-10 w-4 h-4 ml-1 transition-transform duration-300" 
+                className="relative z-10 w-4 h-4 transition-transform duration-300" 
                 style={{ transform: isCategoriesOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} 
                 fill="none" 
                 stroke="currentColor" 

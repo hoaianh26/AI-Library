@@ -1,5 +1,5 @@
 import express from "express";
-import { registerUser, loginUser, addFavorite, removeFavorite, getFavorites, loginAdmin, getUsers, updateUser, addBookToHistory, getViewHistory } from "../controllers/userController.js";
+import { registerUser, loginUser, addFavorite, removeFavorite, getFavorites, loginAdmin, getUsers, updateUser, addBookToHistory, getViewHistory, getUserProfile } from "../controllers/userController.js";
 import { protect, authorizeRoles } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -20,5 +20,8 @@ router.get("/favorites", protect, authorizeRoles('student', 'teacher'), getFavor
 // History routes (for students and teachers)
 router.post("/history/add", protect, authorizeRoles('student', 'teacher'), addBookToHistory);
 router.get("/history", protect, authorizeRoles('student', 'teacher'), getViewHistory);
+
+// Profile route
+router.get("/profile", protect, getUserProfile);
 
 export default router;

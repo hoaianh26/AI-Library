@@ -1,18 +1,28 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
 import PageTransition from '../components/PageTransition';
+import { Mail, Lock, Eye, EyeOff, UserPlus, ArrowLeft, BookOpen, Sparkles, AlertCircle, Phone, Calendar, Fingerprint, Image, List, User as UserIcon } from 'lucide-react';
+import { CATEGORIES } from '../constants/categories';
 
-function Register() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState('student');
-  const [gender, setGender] = useState(''); // New state
-  const [address, setAddress] = useState(''); // New state
+const Register = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    role: 'student',
+    gender: '',
+    address: '',
+    phoneNumber: '',
+    dateOfBirth: '',
+    libraryId: '',
+    avatar: '',
+    favoriteCategories: [], // Changed to array
+  });
   const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -21,9 +31,9 @@ function Register() {
     form: false,
     links: false
   });
-  
-  const { login } = useAuth();
+
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   // Staggered animation effect
   useEffect(() => {
@@ -38,49 +48,47 @@ function Register() {
     return () => timeouts.forEach(timeout => clearTimeout(timeout));
   }, []);
 
+  const { name, email, password, confirmPassword, role, gender, address, phoneNumber, dateOfBirth, libraryId, avatar, favoriteCategories } = formData;
+
+  const onChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleCategoryChange = (e) => {
+    const { value, checked } = e.target;
+    setFormData(prevFormData => ({
+      ...prevFormData,
+      favoriteCategories: checked
+        ? [...prevFormData.favoriteCategories, value]
+        : prevFormData.favoriteCategories.filter(category => category !== value)
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-
-    // Validate password match
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
 
-    // Validate password strength
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
-      return;
-    }
-
-    setIsLoading(true);
-
+    setLoading(true);
+    setError(null);
     try {
-      const res = await fetch('http://localhost:5000/api/users/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role, gender, address }),
+      const res = await axios.post('http://localhost:5000/api/users/register', {
+        name, email, password, role, gender, address, phoneNumber, dateOfBirth, libraryId, avatar, 
+        favoriteCategories,
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
-
       // Add exit animation before navigation
       setIsVisible(false);
       setTimeout(() => {
-        login(data, data.token);
+        login(res.data, res.data.token);
         navigate('/');
       }, 300);
-      
     } catch (err) {
-      setError(err.message);
-      console.error('Registration error:', err);
+      setError(err.response?.data?.message || 'Registration failed');
+      console.error(err);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -89,28 +97,10 @@ function Register() {
     setTimeout(() => navigate(path), 300);
   };
 
-  const getRoleIcon = (roleValue) => {
-    switch (roleValue) {
-      case 'admin': return '👑';
-      case 'teacher': return '👩‍🏫';
-      case 'student': return '🎓';
-      default: return '👤';
-    }
-  };
-
-  const getRoleDescription = (roleValue) => {
-    switch (roleValue) {
-      case 'admin': return 'Full system access';
-      case 'teacher': return 'Create and manage content';
-      case 'student': return 'View and favorite books';
-      default: return '';
-    }
-  };
-
   return (
     <PageTransition isVisible={isVisible} direction="fade">
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-50 relative overflow-hidden">
-        {/* Enhanced decorative background elements */}
+        {/* Decorative background elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-purple-300/30 to-pink-300/30 rounded-full blur-3xl animate-pulse"></div>
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-blue-300/30 to-cyan-300/30 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
@@ -121,23 +111,27 @@ function Register() {
         <div className="absolute top-20 left-20 w-4 h-4 bg-gradient-to-r from-indigo-400 to-purple-500 rounded-full opacity-60 animate-bounce"></div>
         <div className="absolute top-40 right-32 w-6 h-6 bg-gradient-to-r from-pink-400 to-rose-500 rounded-full opacity-60 animate-pulse"></div>
         <div className="absolute bottom-32 left-1/4 w-5 h-5 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full opacity-60 animate-bounce" style={{animationDelay: '1s'}}></div>
-        <div className="absolute top-1/2 right-20 w-3 h-3 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full opacity-60 animate-pulse" style={{animationDelay: '2s'}}></div>
-        <div className="absolute top-1/3 left-1/3 w-2 h-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full opacity-60 animate-bounce" style={{animationDelay: '3s'}}></div>
+        <div className="absolute top-1/3 right-20 w-3 h-3 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full opacity-60 animate-pulse" style={{animationDelay: '3s'}}></div>
 
         <div className="flex items-center justify-center min-h-screen p-6 relative z-10">
-          <div className="w-full max-w-lg">
+          <div className="w-full max-w-md">
             {/* Logo/Brand section with animation */}
             <PageTransition isVisible={formElements.brand} direction="slideDown">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center gap-3 mb-4">
-                  <div className="w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl flex items-center justify-center text-white text-2xl shadow-2xl transform hover:scale-105 transition-transform duration-300">
-                    📚
+                <div className="inline-flex items-center gap-4 mb-4">
+                  <div className="relative">
+                    <div className="w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl flex items-center justify-center text-white shadow-2xl transform hover:scale-105 transition-transform duration-300">
+                      <BookOpen className="w-8 h-8" strokeWidth={2.5} />
+                    </div>
+                    <div className="absolute -top-1 -right-1">
+                      <Sparkles className="w-5 h-5 text-yellow-400 animate-pulse" />
+                    </div>
                   </div>
-                  <div>
+                  <div className="text-left">
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                       Digital Library
                     </h1>
-                    <p className="text-slate-500 text-sm">Join our community!</p>
+                    <p className="text-slate-500 text-sm font-medium">Create your account!</p>
                   </div>
                 </div>
               </div>
@@ -148,15 +142,15 @@ function Register() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="bg-white/70 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-white/50 hover:bg-white/80 transition-all duration-500 hover:shadow-3xl">
                   <h2 className="text-2xl font-bold text-center mb-8 bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-                    Create Your Account
+                    Sign Up for an Account
                   </h2>
 
                   {/* Error message with animation */}
                   {error && (
                     <div className="mb-6 p-4 bg-red-50/80 backdrop-blur-sm border-2 border-red-200 rounded-2xl animate-pulse">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gradient-to-r from-red-400 to-rose-500 rounded-full flex items-center justify-center text-white text-sm font-bold animate-bounce">
-                          ⚠️
+                        <div className="w-8 h-8 bg-gradient-to-r from-red-400 to-rose-500 rounded-full flex items-center justify-center text-white animate-bounce">
+                          <AlertCircle className="w-5 h-5" />
                         </div>
                         <p className="text-red-700 font-medium">{error}</p>
                       </div>
@@ -164,248 +158,319 @@ function Register() {
                   )}
 
                   {/* Name field */}
-                  <div className="mb-6 group">
+                  <div className="mb-4 group">
                     <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
-                      Full Name
+                      Name
                     </label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <svg className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
+                        <UserIcon className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
                       </div>
                       <input
                         type="text"
-                        placeholder="Enter your full name..."
+                        placeholder="Enter your name..."
+                        id="name"
+                        name="name"
                         value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        onChange={onChange}
                         className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
                         required
-                        disabled={isLoading}
+                        disabled={loading}
                       />
                     </div>
                   </div>
 
                   {/* Email field */}
-                  <div className="mb-6 group">
+                  <div className="mb-4 group">
                     <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
                       Email Address
                     </label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <svg className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                        </svg>
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
+                        <Mail className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
                       </div>
                       <input
                         type="email"
                         placeholder="Enter your email..."
+                        id="email"
+                        name="email"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={onChange}
                         className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
                         required
-                        disabled={isLoading}
+                        disabled={loading}
                       />
                     </div>
                   </div>
 
-                  {/* Role selection */}
-                  <div className="mb-6 group">
+                  {/* Password field */}
+                  <div className="mb-4 group">
                     <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
-                      Account Type
+                      Password
                     </label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-transform duration-300 group-hover:scale-110">
-                        <span className="text-lg">{getRoleIcon(role)}</span>
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <Lock className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
                       </div>
-                      <select
-                        value={role}
-                        onChange={(e) => setRole(e.target.value)}
-                        className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all appearance-none hover:border-indigo-300 hover:bg-white/90"
-                        disabled={isLoading}
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Enter your password..."
+                        id="password"
+                        name="password"
+                        value={password}
+                        onChange={onChange}
+                        className="w-full pl-12 pr-14 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
+                        required
+                        disabled={loading}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors hover:scale-110 active:scale-95"
+                        disabled={loading}
                       >
-                        <option value="student">🎓 Student Account</option>
-                        <option value="teacher">👩‍🏫 Teacher Account</option>
-                        <option value="admin">👑 Admin Account</option>
-                      </select>
-                      <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                        <svg className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </div>
+                        {showPassword ? (
+                          <EyeOff className="w-5 h-5" />
+                        ) : (
+                          <Eye className="w-5 h-5" />
+                        )}
+                      </button>
                     </div>
-                    <p className="text-xs text-slate-500 mt-2 pl-2 transition-colors group-hover:text-indigo-600">
-                      {getRoleDescription(role)}
-                    </p>
                   </div>
 
-                  {/* Gender selection */}
-                  <div className="mb-6 group">
+                  {/* Confirm Password field */}
+                  <div className="mb-4 group">
+                    <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
+                      Confirm Password
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <Lock className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                      </div>
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="Confirm your password..."
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        value={confirmPassword}
+                        onChange={onChange}
+                        className="w-full pl-12 pr-14 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
+                        required
+                        disabled={loading}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors hover:scale-110 active:scale-95"
+                        disabled={loading}
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="w-5 h-5" />
+                        ) : (
+                          <Eye className="w-5 h-5" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Role field */}
+                  <div className="mb-4 group">
+                    <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
+                      Role
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
+                        <UserIcon className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                      </div>
+                      <select
+                        id="role"
+                        name="role"
+                        value={role}
+                        onChange={onChange}
+                        className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
+                        disabled={loading}
+                      >
+                        <option value="student">Student</option>
+                        <option value="teacher">Teacher</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Gender field */}
+                  <div className="mb-4 group">
                     <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
                       Gender
                     </label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <span className="text-lg">{gender === 'Male' ? '♂️' : gender === 'Female' ? '♀️' : '🚻'}</span>
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
+                        <UserIcon className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
                       </div>
                       <select
+                        id="gender"
+                        name="gender"
                         value={gender}
-                        onChange={(e) => setGender(e.target.value)}
-                        className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all appearance-none hover:border-indigo-300 hover:bg-white/90"
-                        disabled={isLoading}
+                        onChange={onChange}
+                        className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
+                        disabled={loading}
                       >
                         <option value="">Select Gender</option>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
                         <option value="Other">Other</option>
                       </select>
-                      <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                        <svg className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </div>
                     </div>
                   </div>
 
                   {/* Address field */}
-                  <div className="mb-6 group">
+                  <div className="mb-4 group">
                     <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
                       Address
                     </label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <svg className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0L6.343 16.657a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
+                        <UserIcon className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
                       </div>
                       <input
                         type="text"
                         placeholder="Enter your address..."
+                        id="address"
+                        name="address"
                         value={address}
-                        onChange={(e) => setAddress(e.target.value)}
+                        onChange={onChange}
                         className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
-                        disabled={isLoading}
+                        disabled={loading}
                       />
                     </div>
                   </div>
 
-                  {/* Password field */}
+                  {/* Phone Number field */}
+                  <div className="mb-4 group">
+                    <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
+                      Phone Number
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
+                        <Phone className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Enter your phone number..."
+                        id="phoneNumber"
+                        name="phoneNumber"
+                        value={phoneNumber}
+                        onChange={onChange}
+                        className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
+                        disabled={loading}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Date of Birth field */}
+                  <div className="mb-4 group">
+                    <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
+                      Date of Birth
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
+                        <Calendar className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                      </div>
+                      <input
+                        type="date"
+                        id="dateOfBirth"
+                        name="dateOfBirth"
+                        value={dateOfBirth}
+                        onChange={onChange}
+                        className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
+                        disabled={loading}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Library ID field */}
+                  <div className="mb-4 group">
+                    <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
+                      Library ID
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
+                        <Fingerprint className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Enter your library ID..."
+                        id="libraryId"
+                        name="libraryId"
+                        value={libraryId}
+                        onChange={onChange}
+                        className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
+                        disabled={loading}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Avatar URL field */}
+                  <div className="mb-4 group">
+                    <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
+                      Avatar URL
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
+                        <Image className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Enter URL for your avatar..."
+                        id="avatar"
+                        name="avatar"
+                        value={avatar}
+                        onChange={onChange}
+                        className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
+                        disabled={loading}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Favorite Categories checkboxes */}
                   <div className="mb-6 group">
                     <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
-                      Password
+                      Favorite Categories
                     </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <svg className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                      </div>
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Create a strong password..."
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full pl-12 pr-14 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
-                        required
-                        disabled={isLoading}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors hover:scale-110 active:scale-95"
-                        disabled={isLoading}
-                      >
-                        {showPassword ? (
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                          </svg>
-                        ) : (
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                        )}
-                      </button>
+                    <div className="grid grid-cols-2 gap-2 p-4 border-2 border-slate-200 rounded-2xl bg-white/80 max-h-60 overflow-y-auto">
+                      {CATEGORIES.map((category) => (
+                        <div key={category} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            id={category}
+                            name="favoriteCategories"
+                            value={category}
+                            checked={favoriteCategories.includes(category)}
+                            onChange={handleCategoryChange}
+                            className="form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out rounded focus:ring-indigo-500"
+                            disabled={loading}
+                          />
+                          <label htmlFor={category} className="ml-2 text-slate-700 text-sm">
+                            {category}
+                          </label>
+                        </div>
+                      ))}
                     </div>
-                    <p className="text-xs text-slate-500 mt-2 pl-2 transition-colors group-hover:text-indigo-600">
-                      Must be at least 6 characters long
-                    </p>
-                  </div>
-
-                  {/* Confirm Password field */}
-                  <div className="mb-8 group">
-                    <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
-                      Confirm Password
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <svg className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <input
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder="Confirm your password..."
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className={`w-full pl-12 pr-14 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 transition-all placeholder:text-slate-400 hover:bg-white/90 ${
-                          confirmPassword && password !== confirmPassword
-                            ? 'border-red-300 focus:ring-red-200 focus:border-red-400 hover:border-red-300'
-                            : confirmPassword && password === confirmPassword
-                            ? 'border-green-300 focus:ring-green-200 focus:border-green-400 hover:border-green-300'
-                            : 'border-slate-200 focus:ring-indigo-200 focus:border-indigo-400 hover:border-indigo-300'
-                        }`}
-                        required
-                        disabled={isLoading}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors hover:scale-110 active:scale-95"
-                        disabled={isLoading}
-                      >
-                        {showConfirmPassword ? (
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                          </svg>
-                        ) : (
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                        )}
-                      </button>
-                    </div>
-                    {confirmPassword && password !== confirmPassword && (
-                      <p className="text-xs text-red-500 mt-2 pl-2 animate-pulse">
-                        Passwords do not match
-                      </p>
-                    )}
-                    {confirmPassword && password === confirmPassword && (
-                      <p className="text-xs text-green-500 mt-2 pl-2 animate-pulse">
-                        Passwords match ✓
-                      </p>
-                    )}
                   </div>
 
                   {/* Enhanced Register button */}
                   <button
                     type="submit"
-                    disabled={isLoading || (confirmPassword && password !== confirmPassword)}
+                    disabled={loading}
                     className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-4 rounded-2xl font-semibold hover:from-indigo-600 hover:to-purple-700 disabled:from-slate-400 disabled:to-slate-500 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none disabled:cursor-not-allowed flex items-center justify-center gap-2 active:scale-95 hover:scale-105 group"
                   >
-                    {isLoading ? (
+                    {loading ? (
                       <>
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        <span>Creating Account...</span>
+                        <span>Registering...</span>
                       </>
                     ) : (
                       <>
-                        <svg className="w-5 h-5 transition-transform group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                        </svg>
-                        <span>Create Account</span>
+                        <UserPlus className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                        <span>Register</span>
                       </>
                     )}
                   </button>
@@ -422,10 +487,8 @@ function Register() {
                     onClick={() => handleLinkClick('/login')}
                     className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 rounded-2xl font-semibold hover:from-slate-200 hover:to-slate-300 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:scale-95 hover:scale-105 group"
                   >
-                    <svg className="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    Sign In Instead
+                    <UserPlus className="w-5 h-5 transition-transform group-hover:rotate-12" />
+                    Login to Your Account
                   </button>
                 </div>
               </div>
@@ -436,9 +499,7 @@ function Register() {
                   onClick={() => handleLinkClick('/')}
                   className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 transition-colors duration-300 font-medium group"
                 >
-                  <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                  </svg>
+                  <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
                   <span>Back to Library</span>
                 </button>
               </div>
@@ -448,6 +509,6 @@ function Register() {
       </div>
     </PageTransition>
   );
-}
+};
 
 export default Register;

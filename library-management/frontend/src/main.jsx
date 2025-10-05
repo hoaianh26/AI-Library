@@ -17,6 +17,7 @@ import Favorites from './pages/Favorites.jsx'; // Import Favorites
 import History from './pages/History.jsx'; // Import History
 import CategoryPage from './pages/CategoryPage.jsx'; // Import CategoryPage
 import AIPage from './pages/AIPage.jsx'; // Import AIPage
+import ProfilePage from './pages/ProfilePage.jsx'; // Import ProfilePage
 import Layout from './layouts/Layout'; // Import the new Layout
 import './styles/pageAnimations.css';
 
@@ -46,6 +47,7 @@ const AppRoutes = () => {
           <Route path="history" element={<History />} />
           <Route path="ai" element={<AIPage />} /> {/* New AI Page Route */}
           <Route path="category/:categoryName" element={<CategoryPage />} /> {/* New Category Page Route */}
+          <Route path="profile" element={<ProfilePage />} /> {/* New Profile Page Route */}
           <Route 
             path="admin/dashboard"
             element={
