@@ -4,11 +4,15 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { protect, authorizeRoles } from '../middleware/authMiddleware.js'; // Import middleware
+import { getRecommendations } from '../controllers/bookController.js'; // Import recommendations controller
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const router = express.Router();
+
+// GET recommendations for the current user
+router.get("/recommendations", protect, getRecommendations);
 
 // SEARCH for books by title or author
 router.get("/search", protect, async (req, res) => {
