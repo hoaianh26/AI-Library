@@ -18,15 +18,16 @@ const AIPage = () => {
 
       try {
         const aiResponse = await getAIChatResponse(input, messages, token); // Call getAIChatResponse with token
+        // The response can have { text, books }
         setMessages((prevMessages) => [
           ...prevMessages,
-          { text: aiResponse.text, sender: 'ai' }, // Correctly access aiResponse.text
+          { text: aiResponse.text, sender: 'ai', books: aiResponse.books || [] }, // Store books array
         ]);
       } catch (error) {
         console.error("Error sending message to AI:", error);
         setMessages((prevMessages) => [
           ...prevMessages,
-          { text: "Sorry, I'm having trouble connecting to the AI. Please try again later.", sender: 'ai' },
+          { text: "Sorry, I'm having trouble connecting to the AI. Please try again later.", sender: 'ai', books: [] },
         ]);
       } finally {
         setIsLoading(false); // Set loading to false
@@ -56,7 +57,25 @@ const AIPage = () => {
                     : 'bg-gray-200 text-gray-800'
                 }`}
               >
-                {msg.text}
+                {/* Render the main text */}
+                <div>{msg.text}</div>
+
+                {/* Render books if they exist */}
+                {msg.sender === 'ai' && msg.books && msg.books.length > 0 && (
+                  <div className="mt-3 border-t border-gray-300 pt-3">
+                    <div className="grid grid-cols-1 gap-2">
+                      {msg.books.map((book) => (
+                        <div key={book._id} className="flex items-center bg-white p-2 rounded-lg">
+                          <img src={book.imageUrl} alt={book.title} className="w-12 h-16 object-cover rounded-md mr-3" />
+                          <div>
+                            <div className="font-bold text-sm text-gray-900">{book.title}</div>
+                            <div className="text-xs text-gray-600">{book.author}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ))
