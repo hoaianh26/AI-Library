@@ -9,6 +9,16 @@ const bookSchema = new mongoose.Schema(
     available: { type: Boolean, default: true },
     imageUrl: { type: String },
     htmlContentPath: { type: String },
+    rating: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+    numReviews: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
   },
   { timestamps: true }
 );
