@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from '../context/AuthContext';
 import { CATEGORIES } from '../constants/categories';
+import { TIERS } from '@shared/tiers'; // 👈 thêm dòng này
 
 function BookManagement() {
   const [books, setBooks] = useState([]);
@@ -13,6 +14,7 @@ function BookManagement() {
   const [selectedZipFile, setSelectedZipFile] = useState(null);
   const [editingBook, setEditingBook] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [allowedTiers, setAllowedTiers] = useState(TIERS);
 
   const { token } = useAuth();
 
@@ -51,6 +53,7 @@ function BookManagement() {
     setImageUrl("");
     setSelectedImageFile(null);
     setSelectedZipFile(null);
+    setAllowedTiers(TIERS);
     setIsModalOpen(true);
   };
 
@@ -63,6 +66,11 @@ function BookManagement() {
     setImageUrl(book.imageUrl || "");
     setSelectedImageFile(null);
     setSelectedZipFile(null);
+    setAllowedTiers(
+      book.allowedTiers && book.allowedTiers.length
+        ? book.allowedTiers
+        : TIERS
+    );
     setIsModalOpen(true);
   };
 
@@ -76,6 +84,14 @@ function BookManagement() {
 
   const handleZipFileChange = (e) => {
     setSelectedZipFile(e.target.files[0]);
+  };
+
+    const handleTierToggle = (tier) => {
+    setAllowedTiers((prev) =>
+      prev.includes(tier)
+        ? prev.filter((t) => t !== tier) // bỏ chọn
+        : [...prev, tier] // thêm chọn
+    );
   };
 
   const handleUpload = async (file, fileType) => {
@@ -138,6 +154,7 @@ function BookManagement() {
       categories: categories,
       imageUrl: uploadedImageUrl,
       htmlContentPath: uploadedHtmlContentPath,
+      allowedTiers: allowedTiers,
     };
 
     try {
@@ -276,6 +293,35 @@ function BookManagement() {
                       ))}
                     </div>
                   </div>
+                </div>
+
+                                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Allowed membership tiers
+                  </label>
+                  <div className="flex flex-wrap gap-3">
+                    {TIERS.map((t) => (
+                      <label
+                        key={t}
+                        className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer text-sm
+                          ${allowedTiers.includes(t)
+                            ? 'bg-indigo-50 border-indigo-400 text-indigo-700'
+                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                          }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                          checked={allowedTiers.includes(t)}
+                          onChange={() => handleTierToggle(t)}
+                        />
+                        <span className="capitalize">{t}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Bỏ chọn Bronze nếu bạn muốn sách chỉ cho Silver/Gold đọc.
+                  </p>
                 </div>
 
                 <div>

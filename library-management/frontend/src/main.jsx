@@ -20,6 +20,8 @@ import AIPage from './pages/AIPage.jsx'; // Import AIPage
 import ProfilePage from './pages/ProfilePage.jsx'; // Import ProfilePage
 import Layout from './layouts/Layout'; // Import the new Layout
 import './styles/pageAnimations.css';
+import Membership from './pages/Membership.jsx';
+
 
 const AppRoutes = () => {
   const location = useLocation();
@@ -48,14 +50,8 @@ const AppRoutes = () => {
           <Route path="ai" element={<AIPage />} /> {/* New AI Page Route */}
           <Route path="category/:categoryName" element={<CategoryPage />} /> {/* New Category Page Route */}
           <Route path="profile" element={<ProfilePage />} /> {/* New Profile Page Route */}
-          <Route 
-            path="admin/dashboard"
-            element={
-              <AdminRoute>
-                <AdminDashboard />
-              </AdminRoute>
-            }
-          />
+          <Route path="admin/dashboard" element={<AdminRoute> <AdminDashboard /> </AdminRoute>}/>
+           <Route path="membership" element={<Membership />} />
         </Route>
       </Routes>
     </AnimatePresence>

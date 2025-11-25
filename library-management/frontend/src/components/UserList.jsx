@@ -1,5 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
+
+const TIER_COLORS = {
+  bronze: "bg-amber-200 text-amber-800",
+  silver: "bg-slate-200 text-slate-800",
+  gold: "bg-yellow-200 text-yellow-800",
+};
 
 function UserList() {
   const [users, setUsers] = useState([]);
@@ -7,6 +13,8 @@ function UserList() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({ name: '', email: '', role: '', password: '' });
+  const [membershipEdit, setMembershipEdit] = useState({});
+  const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'ascending' });
 
   const { token } = useAuth();
 
@@ -31,6 +39,44 @@ function UserList() {
       fetchUsers();
     }
   }, [token]);
+  
+  const sortedAndFilteredUsers = useMemo(() => {
+    let sortableUsers = [...users].filter(user =>
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (sortConfig.key !== null) {
+      sortableUsers.sort((a, b) => {
+        let aValue = a[sortConfig.key];
+        let bValue = b[sortConfig.key];
+
+        // Handle date sorting
+        if (sortConfig.key === 'createdAt' || sortConfig.key === 'membershipExpiresAt') {
+          aValue = aValue ? new Date(aValue).getTime() : 0;
+          bValue = bValue ? new Date(bValue).getTime() : 0;
+        }
+        
+        if (aValue < bValue) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableUsers;
+  }, [users, searchTerm, sortConfig]);
+
+  const requestSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
 
   const handleEditClick = (user) => {
     setEditingUser(user);
@@ -51,7 +97,6 @@ function UserList() {
     e.preventDefault();
     if (!editingUser) return;
 
-    // Filter out empty password field
     const updateData = { ...formData };
     if (!updateData.password) {
       delete updateData.password;
@@ -72,18 +117,74 @@ function UserList() {
         throw new Error(errorData.message || 'Failed to update user');
       }
 
-      await fetchUsers(); // Refresh the user list
+      await fetchUsers();
       handleModalClose();
     } catch (error) {
       console.error('Error updating user:', error);
       alert(`Error: ${error.message}`);
     }
   };
+  
+  const handleMembershipChange = (userId, field, value) => {
+    setMembershipEdit(prev => {
+      const currentUser = users.find(u => u._id === userId);
+      const existingEdit = prev[userId] || {};
+      
+      return {
+        ...prev,
+        [userId]: {
+          ...existingEdit,
+          tier: existingEdit.tier || currentUser?.membershipTier, // Ensure tier is always populated
+          [field]: value,
+        },
+      };
+    });
+  };
 
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleMembershipSave = async (userId) => {
+    const editData = membershipEdit[userId];
+    if (!editData || !editData.tier) return; // Don't save if there's no data or tier
+
+    try {
+      const res = await fetch(`${API_URL}/api/users/${userId}/membership`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          tier: editData.tier,
+          expiresInDays: editData.expiresInDays || 0,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to update membership');
+      }
+      
+      const updatedUser = await res.json();
+
+      setUsers(prevUsers => prevUsers.map(u => u._id === userId ? { ...u, ...updatedUser } : u));
+      
+      setMembershipEdit(prev => {
+        const newEdit = { ...prev };
+        delete newEdit[userId];
+        return newEdit;
+      });
+
+    } catch (error) {
+      console.error('Error updating membership:', error);
+      alert(`Error: ${error.message}`);
+    }
+  };
+
+  const getSortIndicator = (key) => {
+    if (sortConfig.key === key) {
+      return sortConfig.direction === 'ascending' ? ' ▲' : ' ▼';
+    }
+    return '';
+  };
 
   return (
     <>
@@ -102,20 +203,69 @@ function UserList() {
           <table className="w-full text-left table-auto">
             <thead>
               <tr className="bg-slate-100/80">
-                <th className="p-4 font-semibold text-slate-700">Name</th>
-                <th className="p-4 font-semibold text-slate-700">Email</th>
-                <th className="p-4 font-semibold text-slate-700">Role</th>
-                <th className="p-4 font-semibold text-slate-700">Joined</th>
-                <th className="p-4 font-semibold text-slate-700 text-right">Actions</th>
+                <th className="p-4 font-semibold text-slate-700">
+                  <button onClick={() => requestSort('name')} className="w-full text-left">Name{getSortIndicator('name')}</button>
+                </th>
+                <th className="p-4 font-semibold text-slate-700">
+                  <button onClick={() => requestSort('email')} className="w-full text-left">Email{getSortIndicator('email')}</button>
+                </th>
+                <th className="p-4 font-semibold text-slate-700">
+                   <button onClick={() => requestSort('role')} className="w-full text-left">Role{getSortIndicator('role')}</button>
+                </th>
+                <th className="p-4 font-semibold text-slate-700">
+                  <button onClick={() => requestSort('membershipTier')} className="w-full text-left">Membership{getSortIndicator('membershipTier')}</button>
+                </th>
+                <th className="p-4 font-semibold text-slate-700">
+                  <button onClick={() => requestSort('createdAt')} className="w-full text-left">Joined{getSortIndicator('createdAt')}</button>
+                </th>
+                <th className="p-4 font-semibold text-slate-700">Membership Actions</th>
+                <th className="p-4 font-semibold text-slate-700 text-right">User Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredUsers.map(user => (
+              {sortedAndFilteredUsers.map(user => (
                 <tr key={user._id} className="border-b border-slate-200/80 hover:bg-slate-50/80 transition-colors">
                   <td className="p-4 text-slate-800">{user.name}</td>
                   <td className="p-4 text-slate-600">{user.email}</td>
                   <td className="p-4 text-slate-600">{user.role}</td>
+                  <td className="p-4 text-slate-600">
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${TIER_COLORS[user.membershipTier] || 'bg-gray-200 text-gray-800'}`}>
+                      {user.membershipTier || 'N/A'}
+                    </span>
+                    <div className="text-xs text-slate-500 mt-1">
+                      {user.membershipExpiresAt ? `Expires: ${new Date(user.membershipExpiresAt).toLocaleDateString()}` : 'Permanent'}
+                    </div>
+                  </td>
                   <td className="p-4 text-slate-500 text-sm">{new Date(user.createdAt).toLocaleDateString()}</td>
+                  <td className="p-4 space-y-2">
+                    {user.role !== 'admin' && (
+                      <>
+                        <select 
+                          value={membershipEdit[user._id]?.tier || user.membershipTier}
+                          onChange={(e) => handleMembershipChange(user._id, 'tier', e.target.value)}
+                          className="w-full border-slate-300 rounded-md text-sm p-1"
+                        >
+                          <option value="bronze">Bronze</option>
+                          <option value="silver">Silver</option>
+                          <option value="gold">Gold</option>
+                        </select>
+                        <input 
+                          type="number"
+                          placeholder="Days (blank = permanent)"
+                          value={membershipEdit[user._id]?.expiresInDays || ''}
+                          onChange={(e) => handleMembershipChange(user._id, 'expiresInDays', e.target.value)}
+                          className="w-full border-slate-300 rounded-md text-sm p-1 placeholder:text-slate-400"
+                        />
+                        <button
+                          onClick={() => handleMembershipSave(user._id)}
+                          disabled={!membershipEdit[user._id]}
+                          className="w-full bg-indigo-500 text-white px-2 py-1 rounded-md text-xs font-semibold hover:bg-indigo-600 transition-all disabled:bg-slate-300 disabled:cursor-not-allowed"
+                        >
+                          Save
+                        </button>
+                      </>
+                    )}
+                  </td>
                   <td className="p-4 text-right">
                     <button 
                       onClick={() => handleEditClick(user)}
@@ -155,8 +305,7 @@ function UserList() {
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">Role</label>
                   <select name="role" value={formData.role} onChange={handleFormChange} className="w-full border-2 border-slate-200 p-4 rounded-2xl bg-white/80">
-                    <option value="student">student</option>
-                    <option value="teacher">teacher</option>
+                    <option value="user">user</option>
                   </select>
                 </div>
                 <div>

@@ -1,5 +1,9 @@
 import * as api from './api';
 
+export const upgradeMembership = async (tier, durationMonths, token) => {
+  return api.updateMembership({ tier, durationMonths, token });
+};
+
 export const getBooks = async () => {
   try {
     // Gọi đúng hàm getBooks từ api.js

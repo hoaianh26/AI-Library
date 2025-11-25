@@ -3,6 +3,14 @@ import path from 'path';
 import fs from 'fs';
 import unzipper from 'unzipper';
 import { fileURLToPath } from 'url';
+import { v2 as cloudinary } from 'cloudinary';
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,7 +34,7 @@ async function findMainHtmlFile(directoryPath) {
 
 // Set up storage for uploaded files
 const storage = multer.diskStorage({
-  destination: path.join(__dirname, '../public/uploads'), // Temporary storage for zip files
+  destination: path.join(__dirname, '../public/uploads'), // Temporary storage for all files
   filename: function (req, file, cb) {
     cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
   },
@@ -94,12 +102,31 @@ export const uploadFile = (req, res) => {
         return res.status(500).json({ message: `Error extracting ZIP file: ${zipErr.message}` });
       }
     } else {
-      // Handle image upload (existing logic)
-      return res.status(200).json({
-        message: 'Image uploaded successfully',
-        filePath: `/public/uploads/${req.file.filename}`,
-        fileType: 'image',
-      });
+      // Handle image upload by sending to Cloudinary
+      try {
+        const result = await cloudinary.uploader.upload(uploadedFilePath, {
+          folder: 'library_uploads',
+          use_filename: true,
+          unique_filename: true,
+        });
+
+        // Delete the temporary local file
+        await fs.promises.unlink(uploadedFilePath);
+
+        return res.status(200).json({
+          message: 'Image uploaded successfully to Cloudinary',
+          filePath: result.secure_url, // Return Cloudinary URL
+          fileType: 'image',
+        });
+      } catch (uploadErr) {
+        // Attempt to delete the local file even if upload fails
+        try {
+          await fs.promises.unlink(uploadedFilePath);
+        } catch (deleteErr) {
+          console.error('Failed to delete temporary file after failed upload:', deleteErr);
+        }
+        return res.status(500).json({ message: `Cloudinary upload error: ${uploadErr.message}` });
+      }
     }
   });
 };

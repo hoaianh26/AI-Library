@@ -12,6 +12,8 @@ import categoryRoutes from "./routes/categoryRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import searchRoutes from "./routes/searchRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
+
 
 const app = express();
 
@@ -32,6 +34,8 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/payments", paymentRoutes);
+
 
 // Cấu hình PORT
 const PORT = process.env.PORT || 5000;

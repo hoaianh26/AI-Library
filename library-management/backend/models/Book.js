@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { TIERS } from "../../shared/tiers.js";
 
 const bookSchema = new mongoose.Schema(
   {
@@ -9,6 +10,14 @@ const bookSchema = new mongoose.Schema(
     available: { type: Boolean, default: true },
     imageUrl: { type: String },
     htmlContentPath: { type: String },
+    
+    // Nếu không set gì, mặc định tất cả tier (bronze/silver/gold) đều đọc được
+    allowedTiers: {
+      type: [String],
+      enum: TIERS,
+      default: TIERS,
+    },
+
     rating: {
       type: Number,
       required: true,
@@ -24,14 +33,16 @@ const bookSchema = new mongoose.Schema(
 );
 
 // Add a text index to the title and author fields for text search
-bookSchema.index({ title: 'text', author: 'text' });
+bookSchema.index({ title: "text", author: "text" });
 
 // Virtual for full image URL
-bookSchema.set('toJSON', {
+bookSchema.set("toJSON", {
   transform: (doc, ret) => {
-    if (ret.imageUrl && !ret.imageUrl.startsWith('http')) {
+    if (ret.imageUrl && !ret.imageUrl.startsWith("http")) {
       // Prepend the base URL of the backend
-      ret.imageUrl = `${process.env.BACKEND_URL || 'http://localhost:5000'}${ret.imageUrl}`;
+      ret.imageUrl = `${
+        process.env.BACKEND_URL || "http://localhost:5000"
+      }${ret.imageUrl}`;
     }
     return ret;
   },

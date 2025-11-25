@@ -41,7 +41,7 @@ const Favorites = () => {
       }
     };
 
-    if (token && user && (user.role === 'student' || user.role === 'teacher')) {
+    if (token && user && user.role === 'user') {
       fetchFavorites();
     } else if (user && user.role === 'admin') {
       setError('Admins do not have a favorites list.');

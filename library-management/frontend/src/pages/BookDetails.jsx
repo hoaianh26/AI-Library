@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getBook, deleteBook, addFavorite, removeFavorite, getFavorites } from '../services/bookService';
 import { useAuth } from '../context/AuthContext';
 import PageTransition from '../components/PageTransition';
@@ -12,12 +12,12 @@ const BookDetails = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  
+
   // New states for favorites popup
   const [showFavoritesPopup, setShowFavoritesPopup] = useState(false);
   const [favoritesMessage, setFavoritesMessage] = useState('');
   const [favoritesType, setFavoritesType] = useState(''); // 'added' or 'removed'
-  
+
   const { id } = useParams();
   const { user, token } = useAuth();
   const navigate = useNavigate();
@@ -52,7 +52,6 @@ const BookDetails = () => {
       fetchBook();
     }
   }, [id, token, user]);
-
 
   // Auto hide favorites popup after 3 seconds
   useEffect(() => {
@@ -279,10 +278,18 @@ const BookDetails = () => {
                     <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-3 leading-tight">
                       {book.title}
                     </h1>
-                    <p className="text-slate-700 font-semibold text-xl md:text-2xl flex items-center gap-2">
-                      <span className="text-indigo-500">✍️</span>
-                      by {book.author}
-                    </p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <p className="text-slate-700 font-semibold text-xl md:text-2xl flex items-center gap-2">
+                        <span className="text-indigo-500">✍️</span>
+                        by {book.author}
+                      </p>
+                      {/* Badge khi sách đang bị khóa với user hiện tại */}
+                      {book.locked && (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 border border-yellow-200">
+                          🔒 Membership required
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Book Details */}
@@ -337,21 +344,34 @@ const BookDetails = () => {
 
                   {/* Action Buttons */}
                   <div className="space-y-4">
-                    {/* Read Online Button */}
-                    {book.htmlContentPath && (
-                      <a
-                        href={`${API_URL}${book.htmlContentPath}`}
-                        onClick={handleReadOnlineClick}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group inline-flex items-center justify-center gap-3 w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white p-4 rounded-2xl hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 transition-all duration-300 font-semibold text-lg"
+                    {/* Read Online / Membership Button */}
+                    {book.locked ? (
+                      <button
+                        onClick={() => navigate('/membership')}
+                        className="group inline-flex items-center justify-center gap-3 w-full bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 text-white p-4 rounded-2xl hover:from-amber-500 hover:via-orange-600 hover:to-rose-600 transition-all duration-300 font-semibold text-lg"
                       >
-                        <span className="text-2xl group-hover:scale-110 transition-transform duration-300">📖</span>
-                        <span className="text-white">Read Online</span>
+                        <span className="text-2xl group-hover:scale-110 transition-transform duration-300">🔒</span>
+                        <span className="text-white">Nâng cấp membership để đọc</span>
                         <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>
-                      </a>
+                      </button>
+                    ) : (
+                      book.htmlContentPath && (
+                        <a
+                          href={`${API_URL}${book.htmlContentPath}`}
+                          onClick={handleReadOnlineClick}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group inline-flex items-center justify-center gap-3 w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white p-4 rounded-2xl hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 transition-all duration-300 font-semibold text-lg"
+                        >
+                          <span className="text-2xl group-hover:scale-110 transition-transform duration-300">📖</span>
+                          <span className="text-white">Read Online</span>
+                          <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        </a>
+                      )
                     )}
 
                     {/* Favorite Button */}

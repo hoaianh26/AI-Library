@@ -12,7 +12,7 @@ const Register = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'student',
+    role: 'user',
     gender: '',
     address: '',
     phoneNumber: '',
@@ -290,8 +290,7 @@ const Register = () => {
                         className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
                         disabled={loading}
                       >
-                        <option value="student">Student</option>
-                        <option value="teacher">Teacher</option>
+                        <option value="user">User</option>
                       </select>
                     </div>
                   </div>

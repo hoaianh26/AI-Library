@@ -1,27 +1,51 @@
+// backend/routes/userRoutes.js
 import express from "express";
-import { registerUser, loginUser, addFavorite, removeFavorite, getFavorites, loginAdmin, getUsers, updateUser, addBookToHistory, getViewHistory, getUserProfile } from "../controllers/userController.js";
-import { protect, authorizeRoles } from '../middleware/authMiddleware.js';
+import {
+  registerUser,
+  loginUser,
+  loginAdmin,
+  getUsers,
+  updateUser,
+  addFavorite,
+  removeFavorite,
+  getFavorites,
+  addBookToHistory,
+  getViewHistory,
+  getUserProfile,
+  updateUserProfile,
+  updateMembership,
+  updateUserMembershipByAdmin,
+} from "../controllers/userController.js";
+import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
+// Auth
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.post("/admin/login", loginAdmin);
 
-// Admin routes
-router.get("/", protect, authorizeRoles('admin'), getUsers);
-router.put("/:id", protect, authorizeRoles('admin'), updateUser);
+// Admin-only
+router.get("/", protect, authorizeRoles("admin"), getUsers);
+router.put("/:id", protect, authorizeRoles("admin"), updateUser);
+router.put("/:id/membership", protect, authorizeRoles("admin"), updateUserMembershipByAdmin);
 
-// Favorites routes (for students and teachers)
-router.post("/favorites/add", protect, authorizeRoles('student', 'teacher'), addFavorite);
-router.post("/favorites/remove", protect, authorizeRoles('student', 'teacher'), removeFavorite);
-router.get("/favorites", protect, authorizeRoles('student', 'teacher'), getFavorites);
 
-// History routes (for students and teachers)
-router.post("/history/add", protect, authorizeRoles('student', 'teacher'), addBookToHistory);
-router.get("/history", protect, authorizeRoles('student', 'teacher'), getViewHistory);
+// Favorites routes – chỉ cần đăng nhập, KHÔNG check student/teacher nữa
+router.post("/favorites/add", protect, addFavorite);
+router.post("/favorites/remove", protect, removeFavorite);
+router.get("/favorites", protect, getFavorites);
 
-// Profile route
+// History routes – cũng chỉ cần đăng nhập
+router.post("/history/add", protect, addBookToHistory);
+router.get("/history", protect, getViewHistory);
+
+// Profile
 router.get("/profile", protect, getUserProfile);
+router.put("/profile", protect, updateUserProfile);
+
+// Membership (nâng cấp / gia hạn)
+router.patch("/membership", protect, updateMembership);
 
 export default router;
+

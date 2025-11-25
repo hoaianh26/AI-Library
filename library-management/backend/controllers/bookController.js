@@ -6,19 +6,19 @@ import User from '../models/User.js';
 // @access  Private
 const getRecommendations = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).populate('viewHistory.book');
+    const user = await User.findById(req.user.id).populate('viewHistory.bookId');
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const viewedBookIds = user.viewHistory.map(item => item.book._id.toString());
+    const viewedBookIds = user.viewHistory.map(item => item.bookId._id.toString());
     const favoriteBookIds = user.favorites.map(id => id.toString());
     const seenBookIds = [...new Set([...viewedBookIds, ...favoriteBookIds])];
 
     // Find user's preferred categories
     let preferredCategories = [];
-    const booksInHistory = user.viewHistory.map(item => item.book);
+    const booksInHistory = user.viewHistory.map(item => item.bookId);
     
     for (const book of booksInHistory) {
         if(book && book.categories) {

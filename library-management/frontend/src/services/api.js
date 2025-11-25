@@ -84,7 +84,24 @@ export const getFavoritesApi = async (token) => {
   });
   return res.json();
 };
+// Membership
+export const updateMembership = async ({ tier, durationMonths, token }) => {
+  const res = await fetch(`${BASE_API_URL}/users/membership`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    },
+    body: JSON.stringify({ tier, durationMonths }),
+  });
 
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Failed to update membership');
+  }
+
+  return res.json();
+};
 // AI Chat API
 export const getAIChatResponse = async (prompt, history, token) => { // Changed 'message' to 'prompt' for consistency
   const res = await fetch(`${BASE_API_URL}/gemini`, { // Changed '/ai/chat' to '/gemini'
