@@ -1,18 +1,27 @@
 import { useState, useEffect } from "react";
 import { useAuth } from './context/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Recommendations from './components/Recommendations';
-import { BookMarked, Eye, Heart } from 'lucide-react';
+import { BookMarked, Eye } from 'lucide-react';
 import { getFavorites } from './services/bookService';
 
 function App() {
   const [books, setBooks] = useState([]);
   const [followingBooks, setFollowingBooks] = useState([]);
   const { user, token } = useAuth();
+  const navigate = useNavigate();
 
   const API_URL = "http://localhost:5000";
 
-  // Fetch books from backend
+  // Redirect admin to dashboard
+  useEffect(() => {
+    if (user && user.role === 'admin') {
+      navigate('/admin-dashboard');
+    }
+  }, [user, navigate]);
+
+
+  // Fetch books and user data for non-admins
   useEffect(() => {
     const fetchBooksAndFavorites = async () => {
       try {
@@ -25,12 +34,11 @@ function App() {
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
         }
-        const allBooks = await res.json();
-        setBooks(allBooks);
+        const booksData = await res.json();
+        setBooks(booksData.books || []); // Handle paginated and non-paginated response
         
         // Fetch favorite books and limit to 5
         const favoriteBooksData = await getFavorites(token);
-        // Sort by most recently added (assuming a 'createdAt' property exists in each favorite object)
         const sortedFavorites = favoriteBooksData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         setFollowingBooks(sortedFavorites.slice(0, 5));
       } catch (err) {
@@ -38,10 +46,15 @@ function App() {
       }
     };
 
-    if (token) {
+    if (token && user && user.role !== 'admin') {
       fetchBooksAndFavorites();
     }
-  }, [token]);
+  }, [token, user]);
+
+  // Render nothing or a loading spinner while redirecting or for admin
+  if (user && user.role === 'admin') {
+    return null; 
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -66,7 +79,7 @@ function App() {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-white mb-1">Your Digital Library</h1>
-                <p className="text-gray-400">Discover {books.length} amazing books</p>
+                <p className="text-gray-400">Discover amazing books</p>
               </div>
             </div>
           </div>

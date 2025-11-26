@@ -111,14 +111,26 @@ router.get("/search", protect, async (req, res) => {
 // GET all books (accessible to all authenticated users)
 router.get("/", protect, async (req, res) => {
   try {
-    const books = await Book.find();
+    const pageSize = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page) || 1;
+
+    const count = await Book.countDocuments({});
+    const books = await Book.find({})
+      .limit(pageSize)
+      .skip(pageSize * (page - 1));
+      
     const user = req.user;
 
     const booksWithLock = books.map((book) =>
       attachLockFlag(book, user, { hideContentPathIfLocked: true })
     );
 
-    res.json(booksWithLock);
+    res.json({
+      books: booksWithLock,
+      page,
+      pages: Math.ceil(count / pageSize),
+      total: count,
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

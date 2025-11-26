@@ -1,5 +1,23 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+
+// Custom hook for debouncing
+const useDebounce = (value, delay) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
 
 const TIER_COLORS = {
   bronze: "bg-amber-200 text-amber-800",
@@ -9,26 +27,42 @@ const TIER_COLORS = {
 
 function UserList() {
   const [users, setUsers] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({ name: '', email: '', role: '', password: '' });
   const [membershipEdit, setMembershipEdit] = useState({});
-  const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'ascending' });
+  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' });
 
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const { token } = useAuth();
 
   const API_URL = "http://localhost:5000";
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (currentPage, currentSearch, currentSort) => {
     try {
-      const res = await fetch(`${API_URL}/api/users`, {
+        const params = new URLSearchParams({
+            page: currentPage,
+            limit: 10,
+            search: currentSearch,
+            sort: currentSort.key,
+            order: currentSort.direction === 'ascending' ? 'asc' : 'desc'
+        });
+
+      const res = await fetch(`${API_URL}/api/users?${params.toString()}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       const data = await res.json();
-      setUsers(data);
+      setUsers(data.users);
+      setPage(data.page);
+      setPages(data.pages);
+      setTotal(data.total);
     } catch (error) {
       console.error('Error fetching users:', error);
     }
@@ -36,38 +70,18 @@ function UserList() {
 
   useEffect(() => {
     if (token) {
-      fetchUsers();
+      // Reset to page 1 whenever search or sort changes
+      if (page !== 1) setPage(1);
+      else fetchUsers(1, debouncedSearchTerm, sortConfig);
     }
-  }, [token]);
-  
-  const sortedAndFilteredUsers = useMemo(() => {
-    let sortableUsers = [...users].filter(user =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+  }, [token, debouncedSearchTerm, sortConfig]);
 
-    if (sortConfig.key !== null) {
-      sortableUsers.sort((a, b) => {
-        let aValue = a[sortConfig.key];
-        let bValue = b[sortConfig.key];
+  useEffect(() => {
+      if(token) {
+        fetchUsers(page, debouncedSearchTerm, sortConfig);
+      }
+  }, [page, token]);
 
-        // Handle date sorting
-        if (sortConfig.key === 'createdAt' || sortConfig.key === 'membershipExpiresAt') {
-          aValue = aValue ? new Date(aValue).getTime() : 0;
-          bValue = bValue ? new Date(bValue).getTime() : 0;
-        }
-        
-        if (aValue < bValue) {
-          return sortConfig.direction === 'ascending' ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === 'ascending' ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-    return sortableUsers;
-  }, [users, searchTerm, sortConfig]);
 
   const requestSort = (key) => {
     let direction = 'ascending';
@@ -117,7 +131,7 @@ function UserList() {
         throw new Error(errorData.message || 'Failed to update user');
       }
 
-      await fetchUsers();
+      await fetchUsers(page, debouncedSearchTerm, sortConfig);
       handleModalClose();
     } catch (error) {
       console.error('Error updating user:', error);
@@ -134,7 +148,7 @@ function UserList() {
         ...prev,
         [userId]: {
           ...existingEdit,
-          tier: existingEdit.tier || currentUser?.membershipTier, // Ensure tier is always populated
+          tier: existingEdit.tier || currentUser?.membershipTier,
           [field]: value,
         },
       };
@@ -143,7 +157,7 @@ function UserList() {
 
   const handleMembershipSave = async (userId) => {
     const editData = membershipEdit[userId];
-    if (!editData || !editData.tier) return; // Don't save if there's no data or tier
+    if (!editData || !editData.tier) return;
 
     try {
       const res = await fetch(`${API_URL}/api/users/${userId}/membership`, {
@@ -163,9 +177,7 @@ function UserList() {
         throw new Error(errorData.message || 'Failed to update membership');
       }
       
-      const updatedUser = await res.json();
-
-      setUsers(prevUsers => prevUsers.map(u => u._id === userId ? { ...u, ...updatedUser } : u));
+      await fetchUsers(page, debouncedSearchTerm, sortConfig);
       
       setMembershipEdit(prev => {
         const newEdit = { ...prev };
@@ -186,12 +198,41 @@ function UserList() {
     return '';
   };
 
+    const Pagination = ({ page, pages, onPageChange }) => {
+    if (pages <= 1) return null;
+
+    return (
+      <div className="flex justify-center items-center gap-4 mt-8">
+        <button
+          onClick={() => onPageChange(page - 1)}
+          disabled={page === 1}
+          className="px-4 py-2 bg-white border border-slate-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+        >
+          Previous
+        </button>
+        <span className="text-slate-600 font-semibold">
+          Page {page} of {pages}
+        </span>
+        <button
+          onClick={() => onPageChange(page + 1)}
+          disabled={page === pages}
+          className="px-4 py-2 bg-white border border-slate-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+        >
+          Next
+        </button>
+      </div>
+    );
+  };
+
+
   return (
     <>
       <div className="bg-white/70 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-white/50 hover:shadow-3xl transition-all duration-500 hover:bg-white/80">
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-6">
-          User Management
-        </h2>
+         <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              User Management ({total} Users)
+            </h2>
+        </div>
         <input
           type="text"
           placeholder="Search by name or email..."
@@ -223,7 +264,7 @@ function UserList() {
               </tr>
             </thead>
             <tbody>
-              {sortedAndFilteredUsers.map(user => (
+              {users.map(user => (
                 <tr key={user._id} className="border-b border-slate-200/80 hover:bg-slate-50/80 transition-colors">
                   <td className="p-4 text-slate-800">{user.name}</td>
                   <td className="p-4 text-slate-600">{user.email}</td>
@@ -280,6 +321,7 @@ function UserList() {
             </tbody>
           </table>
         </div>
+        <Pagination page={page} pages={pages} onPageChange={setPage} />
       </div>
 
       {isModalOpen && (

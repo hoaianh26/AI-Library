@@ -1,13 +1,19 @@
 import { useState, useEffect } from "react";
 import { useAuth } from '../context/AuthContext';
 import { CATEGORIES } from '../constants/categories';
-import { TIERS } from '@shared/tiers'; // 👈 thêm dòng này
+import { TIERS } from '@shared/tiers';
 
 function BookManagement() {
   const [books, setBooks] = useState([]);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
+
+  // Form state
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [year, setYear] = useState("");
+  const [summary, setSummary] = useState("");
   const [categories, setCategories] = useState([]);
   const [imageUrl, setImageUrl] = useState("");
   const [selectedImageFile, setSelectedImageFile] = useState(null);
@@ -15,40 +21,46 @@ function BookManagement() {
   const [editingBook, setEditingBook] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [allowedTiers, setAllowedTiers] = useState(TIERS);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+
 
   const { token } = useAuth();
 
   const API_URL = "http://localhost:5000";
 
   // Fetch books from backend
-  useEffect(() => {
-    const fetchBooks = async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/books`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        const data = await res.json();
-        setBooks(data);
-      } catch (err) {
-        console.error("Error fetching books:", err);
+  const fetchBooks = async (currentPage) => {
+    try {
+      const res = await fetch(`${API_URL}/api/books?page=${currentPage}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
       }
-    };
-
-    if (token) {
-      fetchBooks();
+      const data = await res.json();
+      setBooks(data.books);
+      setPage(data.page);
+      setPages(data.pages);
+      setTotal(data.total);
+    } catch (err) {
+      console.error("Error fetching books:", err);
     }
-  }, [token]);
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchBooks(page);
+    }
+  }, [token, page]);
 
   const openAddModal = () => {
     setEditingBook(null);
     setTitle("");
     setAuthor("");
     setYear("");
+    setSummary("");
     setCategories([]);
     setImageUrl("");
     setSelectedImageFile(null);
@@ -62,6 +74,7 @@ function BookManagement() {
     setTitle(book.title);
     setAuthor(book.author);
     setYear(book.publishedYear);
+    setSummary(book.summary || "");
     setCategories(book.categories || []);
     setImageUrl(book.imageUrl || "");
     setSelectedImageFile(null);
@@ -121,6 +134,39 @@ function BookManagement() {
       return null;
     }
   };
+  
+  const handleGenerateSummary = async () => {
+    if (!editingBook || !editingBook._id) {
+        alert("Please save the book first before generating a summary.");
+        return;
+    }
+    setIsSummarizing(true);
+    try {
+        const res = await fetch(`${API_URL}/api/gemini/summarize`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ bookId: editingBook._id })
+        });
+
+        if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.message || 'Failed to generate summary.');
+        }
+
+        const data = await res.json();
+        setSummary(data.summary);
+
+    } catch (err) {
+        console.error("Error generating summary:", err);
+        alert(`Error: ${err.message}`);
+    } finally {
+        setIsSummarizing(false);
+    }
+  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -151,6 +197,7 @@ function BookManagement() {
       title,
       author,
       publishedYear: year,
+      summary,
       categories: categories,
       imageUrl: uploadedImageUrl,
       htmlContentPath: uploadedHtmlContentPath,
@@ -173,16 +220,9 @@ function BookManagement() {
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
-
-      const responseData = await res.json();
-
-      if (editingBook) {
-        setBooks(books.map((book) =>
-          book._id === editingBook._id ? responseData : book
-        ));
-      } else {
-        setBooks([...books, responseData]);
-      }
+      
+      // Refetch the current page to see the updated/new data
+      fetchBooks(page);
       closeModal();
 
     } catch (err) {
@@ -203,8 +243,10 @@ function BookManagement() {
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
         }
+        
+        // Refetch the current page's data
+        fetchBooks(page);
 
-        setBooks(books.filter((book) => book._id !== id));
       } catch (err) {
         console.error("Error deleting book:", err);
       }
@@ -216,6 +258,32 @@ function BookManagement() {
       prev.includes(category) 
         ? prev.filter(c => c !== category) 
         : [...prev, category]
+    );
+  };
+  
+  const Pagination = ({ page, pages, onPageChange }) => {
+    if (pages <= 1) return null;
+
+    return (
+      <div className="flex justify-center items-center gap-4 mt-8">
+        <button
+          onClick={() => onPageChange(page - 1)}
+          disabled={page === 1}
+          className="px-4 py-2 bg-white border border-slate-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+        >
+          Previous
+        </button>
+        <span className="text-slate-600 font-semibold">
+          Page {page} of {pages}
+        </span>
+        <button
+          onClick={() => onPageChange(page + 1)}
+          disabled={page === pages}
+          className="px-4 py-2 bg-white border border-slate-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+        >
+          Next
+        </button>
+      </div>
     );
   };
 
@@ -275,6 +343,28 @@ function BookManagement() {
                     className="w-full border-2 border-slate-200 p-4 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400"
                   />
                 </div>
+                
+                <div>
+                    <div className="flex justify-between items-center mb-2">
+                         <label className="block text-sm font-semibold text-slate-700">Summary</label>
+                         <button 
+                            type="button"
+                            onClick={handleGenerateSummary}
+                            disabled={!editingBook || isSummarizing}
+                            className="text-xs font-semibold bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                         >
+                            {isSummarizing ? 'Generating...' : '✨ Generate with AI'}
+                         </button>
+                    </div>
+                  <textarea
+                    placeholder="Enter a short summary of the book..."
+                    value={summary}
+                    onChange={(e) => setSummary(e.target.value)}
+                    rows="4"
+                    className="w-full border-2 border-slate-200 p-4 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400"
+                  />
+                </div>
+
 
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">Categories</label>
@@ -377,7 +467,7 @@ function BookManagement() {
             </button>
           </div>
           <p className="text-slate-600 text-lg">
-            Manage your digital library. You have ${books.length} books.
+            Manage your digital library. You have ${total} books.
           </p>
         </div>
 
@@ -440,8 +530,10 @@ function BookManagement() {
             </tbody>
           </table>
         </div>
+        
+        <Pagination page={page} pages={pages} onPageChange={setPage} />
 
-        {books.length === 0 && (
+        {total === 0 && (
           <div className="text-center py-16">
             <div className="text-6xl mb-4">📚</div>
             <h3 className="text-2xl font-bold text-slate-700 mb-2">Your library is empty</h3>
@@ -454,3 +546,5 @@ function BookManagement() {
 }
 
 export default BookManagement;
+
+

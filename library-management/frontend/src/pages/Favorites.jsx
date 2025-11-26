@@ -41,12 +41,10 @@ const Favorites = () => {
       }
     };
 
-    if (token && user && user.role === 'user') {
+    if (user && user.role === 'admin') {
+      navigate('/admin-dashboard');
+    } else if (token && user) {
       fetchFavorites();
-    } else if (user && user.role === 'admin') {
-      setError('Admins do not have a favorites list.');
-      setLoading(false);
-      setIsVisible(true);
     } else {
       navigate('/login');
     }

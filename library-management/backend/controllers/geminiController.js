@@ -1,4 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import fs from 'fs/promises';
+import path from 'path';
 import Book from "../models/Book.js";
 import User from "../models/User.js";
 
@@ -30,18 +32,62 @@ const tools = [
           required: [],
         },
       },
+      {
+        name: "addBookToFavorites",
+        description: "Adds a book to the user's personal list of favorite books.",
+        parameters: {
+          type: "OBJECT",
+          properties: {
+            bookTitle: {
+              type: "STRING",
+              description: "The exact title of the book to add to favorites.",
+            },
+          },
+          required: ["bookTitle"],
+        },
+      },
+      {
+        name: "removeBookFromFavorites",
+        description: "Removes a book from the user's personal list of favorite books.",
+        parameters: {
+          type: "OBJECT",
+          properties: {
+            bookTitle: {
+              type: "STRING",
+              description: "The exact title of the book to remove from favorites.",
+            },
+          },
+          required: ["bookTitle"],
+        },
+      },
+      {
+        name: "getBookDetails",
+        description: "Gets detailed information about a specific book, including a summary.",
+        parameters: {
+            type: "OBJECT",
+            properties: {
+                bookTitle: {
+                    type: "STRING",
+                    description: "The exact title of the book to get details for.",
+                },
+            },
+            required: ["bookTitle"],
+        },
+      },
     ],
   },
 ];
 
-async function callTool(toolCall) {
+async function callTool(toolCall, req) {
   console.log("DEBUG: AI Tool Call Received:", JSON.stringify(toolCall, null, 2));
+  const userId = req.user.id;
 
   if (!toolCall || typeof toolCall !== 'object' || !toolCall.name) {
     console.error("Invalid toolCall object received:", toolCall);
     return { error: "Invalid tool call received by backend." };
   }
 
+  // Tool: getBooks
   if (toolCall.name === "getBooks") {
     const { title, author, category } = toolCall.args || {};
     const query = {};
@@ -63,6 +109,83 @@ async function callTool(toolCall) {
       return { error: "Failed to retrieve books from the database." };
     }
   }
+
+  // Tool: addBookToFavorites
+  if (toolCall.name === "addBookToFavorites") {
+    const { bookTitle } = toolCall.args || {};
+    if (!bookTitle) {
+      return { error: "The book title is required to add it to favorites." };
+    }
+    try {
+      const book = await Book.findOne({ title: { $regex: `^${bookTitle}$`, $options: "i" } });
+      if (!book) {
+        return { error: `Could not find a book with the title "${bookTitle}".` };
+      }
+      const user = await User.findById(userId);
+      if (user.favorites.includes(book._id)) {
+        return { success: true, message: `The book "${book.title}" is already in your favorites.` };
+      }
+      user.favorites.push(book._id);
+      await user.save();
+      return { success: true, message: `I have added "${book.title}" to your favorites.` };
+    } catch (error) {
+      console.error("Error adding book to favorites:", error);
+      return { error: "An error occurred while trying to add the book to your favorites." };
+    }
+  }
+
+  // Tool: removeBookFromFavorites
+  if (toolCall.name === "removeBookFromFavorites") {
+    const { bookTitle } = toolCall.args || {};
+     if (!bookTitle) {
+      return { error: "The book title is required to remove it from favorites." };
+    }
+    try {
+      const book = await Book.findOne({ title: { $regex: `^${bookTitle}$`, $options: "i" } });
+      if (!book) {
+        return { error: `Could not find a book with the title "${bookTitle}".` };
+      }
+      const user = await User.findById(userId);
+      if (!user.favorites.includes(book._id)) {
+        return { success: false, message: `The book "${book.title}" is not in your favorites.` };
+      }
+      user.favorites.pull(book._id);
+      await user.save();
+      return { success: true, message: `I have removed "${book.title}" from your favorites.` };
+    } catch (error) {
+      console.error("Error removing book from favorites:", error);
+      return { error: "An error occurred while trying to remove the book from your favorites." };
+    }
+  }
+  
+  // Tool: getBookDetails
+  if (toolCall.name === "getBookDetails") {
+      const { bookTitle } = toolCall.args || {};
+      if (!bookTitle) {
+          return { error: "The book title is required to get its details." };
+      }
+      try {
+          const book = await Book.findOne({ title: { $regex: `^${bookTitle}$`, $options: "i" } });
+          if (!book) {
+              return { error: `Could not find a book with the title "${bookTitle}".` };
+          }
+          // Return a structured object with book details
+          return {
+              bookDetails: {
+                  title: book.title,
+                  author: book.author,
+                  publishedYear: book.publishedYear,
+                  categories: book.categories,
+                  summary: book.summary || "No summary available."
+              }
+          };
+      } catch (error) {
+          console.error("Error getting book details:", error);
+          return { error: "An error occurred while trying to get book details." };
+      }
+  }
+
+
   return { error: "Tool not found." };
 }
 
@@ -85,6 +208,50 @@ async function findBooksInText(text, user, history) {
   }
   return mentionedBooks;
 }
+
+const generateSummary = async (req, res) => {
+    try {
+        const { bookId } = req.body;
+        if (!bookId) {
+            return res.status(400).json({ message: "Book ID is required." });
+        }
+
+        const book = await Book.findById(bookId);
+        if (!book || !book.htmlContentPath) {
+            return res.status(404).json({ message: "Book or book content not found." });
+        }
+        
+        // Sanitize the path to remove leading slash if it exists
+        const relativePath = book.htmlContentPath.startsWith('/') 
+            ? book.htmlContentPath.substring(1) 
+            : book.htmlContentPath;
+        
+        // Construct the correct path from the project root
+        const contentPath = path.join(process.cwd(), relativePath);
+
+        const htmlContent = await fs.readFile(contentPath, 'utf-8');
+        
+        // Basic HTML stripping and normalization
+        const textContent = htmlContent.replace(/<[^>]*>/g, ' ').replace(/\s\s+/g, ' ').trim();
+        
+        // Truncate to avoid exceeding context window limits
+        const truncatedText = textContent.substring(0, 15000); 
+
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const prompt = `Provide a concise, engaging summary for a potential reader, in 3-5 sentences, based on the following book content:\n\n---\n\n${truncatedText}`;
+        
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const summary = response.text();
+
+        res.json({ summary });
+
+    } catch (error) {
+        console.error("Error generating summary:", error);
+        res.status(500).json({ message: "Error generating summary", error: error.message });
+    }
+};
+
 
 async function generateContent(req, res) {
   try {
@@ -149,7 +316,7 @@ async function generateContent(req, res) {
     if (response.functionCalls() && response.functionCalls().length > 0) {
       const actualFunctionCall = response.functionCalls()[0];
       if (actualFunctionCall.name && actualFunctionCall.args) {
-        const toolResponse = await callTool(actualFunctionCall);
+        const toolResponse = await callTool(actualFunctionCall, req);
         const toolResult = await chat.sendMessage([
           {
             functionResponse: {
@@ -180,4 +347,5 @@ async function generateContent(req, res) {
 
 export {
   generateContent,
+  generateSummary,
 };

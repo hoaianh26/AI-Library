@@ -4,6 +4,7 @@ import {
   registerUser,
   loginUser,
   loginAdmin,
+  verifyEmail,
   getUsers,
   updateUser,
   addFavorite,
@@ -24,6 +25,7 @@ const router = express.Router();
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.post("/admin/login", loginAdmin);
+router.get("/verify-email", verifyEmail);  
 
 // Admin-only
 router.get("/", protect, authorizeRoles("admin"), getUsers);

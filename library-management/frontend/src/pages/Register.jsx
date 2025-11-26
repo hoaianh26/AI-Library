@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
+import authService from '../services/authService';
 import PageTransition from '../components/PageTransition';
-import { Mail, Lock, Eye, EyeOff, UserPlus, ArrowLeft, BookOpen, Sparkles, AlertCircle, Phone, Calendar, Fingerprint, Image, List, User as UserIcon } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, UserPlus, ArrowLeft, BookOpen, Sparkles, AlertCircle, Phone, Calendar, Fingerprint, Image, List, User as UserIcon, CheckCircle } from 'lucide-react';
 import { CATEGORIES } from '../constants/categories';
 
 const Register = () => {
@@ -22,6 +21,7 @@ const Register = () => {
     favoriteCategories: [], // Changed to array
   });
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState('');
   const [formErrors, setFormErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -34,7 +34,6 @@ const Register = () => {
   });
 
   const navigate = useNavigate();
-  const { login } = useAuth();
 
   // Staggered animation effect
   useEffect(() => {
@@ -142,17 +141,13 @@ const Register = () => {
 
     setLoading(true);
     setError(null);
+    setSuccess('');
     try {
-      const res = await axios.post('http://localhost:5000/api/users/register', {
+      const res = await authService.register({
         name, email, password, role, gender, address, phoneNumber, dateOfBirth, libraryId, avatar, 
         favoriteCategories,
       });
-      // Add exit animation before navigation
-      setIsVisible(false);
-      setTimeout(() => {
-        login(res.data, res.data.token);
-        navigate('/');
-      }, 300);
+      setSuccess(res.data.message);
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');
       console.error(err);
@@ -208,351 +203,370 @@ const Register = () => {
 
             {/* Register form with animation */}
             <PageTransition isVisible={formElements.form} direction="scale">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="bg-white/70 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-white/50 hover:bg-white/80 transition-all duration-500 hover:shadow-3xl">
-                  <h2 className="text-2xl font-bold text-center mb-8 bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-                    Sign Up for an Account
-                  </h2>
-
-                  {/* Error message with animation */}
-                  {error && (
-                    <div className="mb-6 p-4 bg-red-50/80 backdrop-blur-sm border-2 border-red-200 rounded-2xl animate-pulse">
+              <div className="bg-white/70 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-white/50 hover:bg-white/80 transition-all duration-500 hover:shadow-3xl">
+                {success ? (
+                  <div className="text-center">
+                     <div className="mb-6 p-4 bg-green-50/80 backdrop-blur-sm border-2 border-green-200 rounded-2xl">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gradient-to-r from-red-400 to-rose-500 rounded-full flex items-center justify-center text-white animate-bounce">
-                          <AlertCircle className="w-5 h-5" />
+                        <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center text-white">
+                          <CheckCircle className="w-5 h-5" />
                         </div>
-                        <p className="text-red-700 font-medium">{error}</p>
+                        <p className="text-green-800 font-medium">{success}</p>
                       </div>
                     </div>
-                  )}
-
-                  {/* Name field */}
-                  <div className="mb-4 group">
-                    <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
-                      Name
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
-                        <UserIcon className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Enter your name..."
-                        id="name"
-                        name="name"
-                        value={name}
-                        onChange={onChange}
-                        className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.name ? 'border-red-500' : 'border-slate-200'}`}
-                        required
-                        disabled={loading}
-                      />
-                    </div>
-                    {formErrors.name && <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>}
+                    <button
+                      onClick={() => handleLinkClick('/login')}
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-2xl font-semibold hover:from-indigo-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:scale-95 hover:scale-105 group"
+                    >
+                      Proceed to Login
+                    </button>
                   </div>
+                ) : (
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    <h2 className="text-2xl font-bold text-center mb-8 bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                      Sign Up for an Account
+                    </h2>
 
-                  {/* Email field */}
-                  <div className="mb-4 group">
-                    <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
-                      Email Address
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
-                        <Mail className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
-                      </div>
-                      <input
-                        type="email"
-                        placeholder="Enter your email..."
-                        id="email"
-                        name="email"
-                        value={email}
-                        onChange={onChange}
-                        className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.email ? 'border-red-500' : 'border-slate-200'}`}
-                        required
-                        disabled={loading}
-                      />
-                    </div>
-                    {formErrors.email && <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>}
-                  </div>
-
-                  {/* Password field */}
-                  <div className="mb-4 group">
-                    <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
-                      Password
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Lock className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
-                      </div>
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Enter your password..."
-                        id="password"
-                        name="password"
-                        value={password}
-                        onChange={onChange}
-                        className={`w-full pl-12 pr-14 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.password ? 'border-red-500' : 'border-slate-200'}`}
-                        required
-                        disabled={loading}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors hover:scale-110 active:scale-95"
-                        disabled={loading}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="w-5 h-5" />
-                        ) : (
-                          <Eye className="w-5 h-5" />
-                        )}
-                      </button>
-                    </div>
-                    {formErrors.password && <p className="text-red-500 text-xs mt-1">{formErrors.password}</p>}
-                  </div>
-
-                  {/* Confirm Password field */}
-                  <div className="mb-4 group">
-                    <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
-                      Confirm Password
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Lock className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
-                      </div>
-                      <input
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder="Confirm your password..."
-                        id="confirmPassword"
-                        name="confirmPassword"
-                        value={confirmPassword}
-                        onChange={onChange}
-                        className={`w-full pl-12 pr-14 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.confirmPassword ? 'border-red-500' : 'border-slate-200'}`}
-                        required
-                        disabled={loading}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors hover:scale-110 active:scale-95"
-                        disabled={loading}
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff className="w-5 h-5" />
-                        ) : (
-                          <Eye className="w-5 h-5" />
-                        )}
-                      </button>
-                    </div>
-                    {formErrors.confirmPassword && <p className="text-red-500 text-xs mt-1">{formErrors.confirmPassword}</p>}
-                  </div>
-
-                  {/* Role field */}
-                  <div className="mb-4 group">
-                    <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
-                      Role
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
-                        <UserIcon className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
-                      </div>
-                      <select
-                        id="role"
-                        name="role"
-                        value={role}
-                        onChange={onChange}
-                        className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
-                        disabled={loading}
-                      >
-                        <option value="user">User</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Gender field */}
-                  <div className="mb-4 group">
-                    <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
-                      Gender
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
-                        <UserIcon className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
-                      </div>
-                      <select
-                        id="gender"
-                        name="gender"
-                        value={gender}
-                        onChange={onChange}
-                        className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.gender ? 'border-red-500' : 'border-slate-200'}`}
-                        disabled={loading}
-                      >
-                        <option value="">Select Gender</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
-                      </select>
-                    </div>
-                    {formErrors.gender && <p className="text-red-500 text-xs mt-1">{formErrors.gender}</p>}
-                  </div>
-
-                  {/* Address field */}
-                  <div className="mb-4 group">
-                    <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
-                      Address
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
-                        <UserIcon className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Enter your address..."
-                        id="address"
-                        name="address"
-                        value={address}
-                        onChange={onChange}
-                        className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.address ? 'border-red-500' : 'border-slate-200'}`}
-                        disabled={loading}
-                      />
-                    </div>
-                    {formErrors.address && <p className="text-red-500 text-xs mt-1">{formErrors.address}</p>}
-                  </div>
-
-                  {/* Phone Number field */}
-                  <div className="mb-4 group">
-                    <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
-                      Phone Number
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
-                        <Phone className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Enter your phone number..."
-                        id="phoneNumber"
-                        name="phoneNumber"
-                        value={phoneNumber}
-                        onChange={onChange}
-                        className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.phoneNumber ? 'border-red-500' : 'border-slate-200'}`}
-                        disabled={loading}
-                      />
-                    </div>
-                    {formErrors.phoneNumber && <p className="text-red-500 text-xs mt-1">{formErrors.phoneNumber}</p>}
-                  </div>
-
-                  {/* Date of Birth field */}
-                  <div className="mb-4 group">
-                    <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
-                      Date of Birth
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
-                        <Calendar className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
-                      </div>
-                      <input
-                        type="date"
-                        id="dateOfBirth"
-                        name="dateOfBirth"
-                        value={dateOfBirth}
-                        onChange={onChange}
-                        className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.dateOfBirth ? 'border-red-500' : 'border-slate-200'}`}
-                        disabled={loading}
-                      />
-                    </div>
-                    {formErrors.dateOfBirth && <p className="text-red-500 text-xs mt-1">{formErrors.dateOfBirth}</p>}
-                  </div>
-
-                  {/* Library ID field */}
-                  <div className="mb-4 group">
-                    <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
-                      Library ID
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
-                        <Fingerprint className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Enter your library ID..."
-                        id="libraryId"
-                        name="libraryId"
-                        value={libraryId}
-                        onChange={onChange}
-                        className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.libraryId ? 'border-red-500' : 'border-slate-200'}`}
-                        disabled={loading}
-                      />
-                    </div>
-                    {formErrors.libraryId && <p className="text-red-500 text-xs mt-1">{formErrors.libraryId}</p>}
-                  </div>
-
-                  {/* Avatar URL field */}
-                  <div className="mb-4 group">
-                    <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
-                      Avatar URL
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
-                        <Image className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Enter URL for your avatar..."
-                        id="avatar"
-                        name="avatar"
-                        value={avatar}
-                        onChange={onChange}
-                        className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
-                        disabled={loading}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Favorite Categories checkboxes */}
-                  <div className="mb-6 group">
-                    <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
-                      Favorite Categories
-                    </label>
-                    <div className="grid grid-cols-2 gap-2 p-4 border-2 border-slate-200 rounded-2xl bg-white/80 max-h-60 overflow-y-auto">
-                      {CATEGORIES.map((category) => (
-                        <div key={category} className="flex items-center">
-                          <input
-                            type="checkbox"
-                            id={category}
-                            name="favoriteCategories"
-                            value={category}
-                            checked={favoriteCategories.includes(category)}
-                            onChange={handleCategoryChange}
-                            className="form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out rounded focus:ring-indigo-500"
-                            disabled={loading}
-                          />
-                          <label htmlFor={category} className="ml-2 text-slate-700 text-sm">
-                            {category}
-                          </label>
+                    {/* Error message with animation */}
+                    {error && (
+                      <div className="mb-6 p-4 bg-red-50/80 backdrop-blur-sm border-2 border-red-200 rounded-2xl animate-pulse">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-gradient-to-r from-red-400 to-rose-500 rounded-full flex items-center justify-center text-white animate-bounce">
+                            <AlertCircle className="w-5 h-5" />
+                          </div>
+                          <p className="text-red-700 font-medium">{error}</p>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Enhanced Register button */}
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-4 rounded-2xl font-semibold hover:from-indigo-600 hover:to-purple-700 disabled:from-slate-400 disabled:to-slate-500 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none disabled:cursor-not-allowed flex items-center justify-center gap-2 active:scale-95 hover:scale-105 group"
-                  >
-                    {loading ? (
-                      <>
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        <span>Registering...</span>
-                      </>
-                    ) : (
-                      <>
-                        <UserPlus className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-                        <span>Register</span>
-                      </>
+                      </div>
                     )}
-                  </button>
-                </div>
-              </form>
+
+                    {/* Form fields... */}
+                    <div className="mb-4 group">
+                      <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
+                        Name
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
+                          <UserIcon className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Enter your name..."
+                          id="name"
+                          name="name"
+                          value={name}
+                          onChange={onChange}
+                          className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.name ? 'border-red-500' : 'border-slate-200'}`}
+                          required
+                          disabled={loading}
+                        />
+                      </div>
+                      {formErrors.name && <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>}
+                    </div>
+
+                    {/* Email field */}
+                    <div className="mb-4 group">
+                      <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
+                        Email Address
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
+                          <Mail className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                        </div>
+                        <input
+                          type="email"
+                          placeholder="Enter your email..."
+                          id="email"
+                          name="email"
+                          value={email}
+                          onChange={onChange}
+                          className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.email ? 'border-red-500' : 'border-slate-200'}`}
+                          required
+                          disabled={loading}
+                        />
+                      </div>
+                      {formErrors.email && <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>}
+                    </div>
+
+                    {/* Password field */}
+                    <div className="mb-4 group">
+                      <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
+                        Password
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <Lock className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                        </div>
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Enter your password..."
+                          id="password"
+                          name="password"
+                          value={password}
+                          onChange={onChange}
+                          className={`w-full pl-12 pr-14 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.password ? 'border-red-500' : 'border-slate-200'}`}
+                          required
+                          disabled={loading}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors hover:scale-110 active:scale-95"
+                          disabled={loading}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="w-5 h-5" />
+                          ) : (
+                            <Eye className="w-5 h-5" />
+                          )}
+                        </button>
+                      </div>
+                      {formErrors.password && <p className="text-red-500 text-xs mt-1">{formErrors.password}</p>}
+                    </div>
+
+                    {/* Confirm Password field */}
+                    <div className="mb-4 group">
+                      <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
+                        Confirm Password
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <Lock className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                        </div>
+                        <input
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="Confirm your password..."
+                          id="confirmPassword"
+                          name="confirmPassword"
+                          value={confirmPassword}
+                          onChange={onChange}
+                          className={`w-full pl-12 pr-14 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.confirmPassword ? 'border-red-500' : 'border-slate-200'}`}
+                          required
+                          disabled={loading}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors hover:scale-110 active:scale-95"
+                          disabled={loading}
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="w-5 h-5" />
+                          ) : (
+                            <Eye className="w-5 h-5" />
+                          )}
+                        </button>
+                      </div>
+                      {formErrors.confirmPassword && <p className="text-red-500 text-xs mt-1">{formErrors.confirmPassword}</p>}
+                    </div>
+
+                    {/* Role field */}
+                    <div className="mb-4 group">
+                      <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
+                        Role
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
+                          <UserIcon className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                        </div>
+                        <select
+                          id="role"
+                          name="role"
+                          value={role}
+                          onChange={onChange}
+                          className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
+                          disabled={loading}
+                        >
+                          <option value="user">User</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Gender field */}
+                    <div className="mb-4 group">
+                      <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
+                        Gender
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
+                          <UserIcon className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                        </div>
+                        <select
+                          id="gender"
+                          name="gender"
+                          value={gender}
+                          onChange={onChange}
+                          className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.gender ? 'border-red-500' : 'border-slate-200'}`}
+                          disabled={loading}
+                        >
+                          <option value="">Select Gender</option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                      {formErrors.gender && <p className="text-red-500 text-xs mt-1">{formErrors.gender}</p>}
+                    </div>
+
+                    {/* Address field */}
+                    <div className="mb-4 group">
+                      <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
+                        Address
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
+                          <UserIcon className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Enter your address..."
+                          id="address"
+                          name="address"
+                          value={address}
+                          onChange={onChange}
+                          className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.address ? 'border-red-500' : 'border-slate-200'}`}
+                          disabled={loading}
+                        />
+                      </div>
+                      {formErrors.address && <p className="text-red-500 text-xs mt-1">{formErrors.address}</p>}
+                    </div>
+
+                    {/* Phone Number field */}
+                    <div className="mb-4 group">
+                      <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
+                        Phone Number
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
+                          <Phone className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Enter your phone number..."
+                          id="phoneNumber"
+                          name="phoneNumber"
+                          value={phoneNumber}
+                          onChange={onChange}
+                          className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.phoneNumber ? 'border-red-500' : 'border-slate-200'}`}
+                          disabled={loading}
+                        />
+                      </div>
+                      {formErrors.phoneNumber && <p className="text-red-500 text-xs mt-1">{formErrors.phoneNumber}</p>}
+                    </div>
+
+                    {/* Date of Birth field */}
+                    <div className="mb-4 group">
+                      <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
+                        Date of Birth
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
+                          <Calendar className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                        </div>
+                        <input
+                          type="date"
+                          id="dateOfBirth"
+                          name="dateOfBirth"
+                          value={dateOfBirth}
+                          onChange={onChange}
+                          className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.dateOfBirth ? 'border-red-500' : 'border-slate-200'}`}
+                          disabled={loading}
+                        />
+                      </div>
+                      {formErrors.dateOfBirth && <p className="text-red-500 text-xs mt-1">{formErrors.dateOfBirth}</p>}
+                    </div>
+
+                    {/* Library ID field */}
+                    <div className="mb-4 group">
+                      <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
+                        Library ID
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
+                          <Fingerprint className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Enter your library ID..."
+                          id="libraryId"
+                          name="libraryId"
+                          value={libraryId}
+                          onChange={onChange}
+                          className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.libraryId ? 'border-red-500' : 'border-slate-200'}`}
+                          disabled={loading}
+                        />
+                      </div>
+                      {formErrors.libraryId && <p className="text-red-500 text-xs mt-1">{formErrors.libraryId}</p>}
+                    </div>
+
+                    {/* Avatar URL field */}
+                    <div className="mb-4 group">
+                      <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
+                        Avatar URL
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300">
+                          <Image className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Enter URL for your avatar..."
+                          id="avatar"
+                          name="avatar"
+                          value={avatar}
+                          onChange={onChange}
+                          className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
+                          disabled={loading}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Favorite Categories checkboxes */}
+                    <div className="mb-6 group">
+                      <label className="block text-sm font-semibold text-slate-700 mb-2 group-hover:text-indigo-600 transition-colors">
+                        Favorite Categories
+                      </label>
+                      <div className="grid grid-cols-2 gap-2 p-4 border-2 border-slate-200 rounded-2xl bg-white/80 max-h-60 overflow-y-auto">
+                        {CATEGORIES.map((category) => (
+                          <div key={category} className="flex items-center">
+                            <input
+                              type="checkbox"
+                              id={category}
+                              name="favoriteCategories"
+                              value={category}
+                              checked={favoriteCategories.includes(category)}
+                              onChange={handleCategoryChange}
+                              className="form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out rounded focus:ring-indigo-500"
+                              disabled={loading}
+                            />
+                            <label htmlFor={category} className="ml-2 text-slate-700 text-sm">
+                              {category}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Enhanced Register button */}
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-4 rounded-2xl font-semibold hover:from-indigo-600 hover:to-purple-700 disabled:from-slate-400 disabled:to-slate-500 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none disabled:cursor-not-allowed flex items-center justify-center gap-2 active:scale-95 hover:scale-105 group"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          <span>Registering...</span>
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                          <span>Register</span>
+                        </>
+                      )}
+                    </button>
+                  </form>
+                )}
+              </div>
             </PageTransition>
 
             {/* Enhanced Login link */}

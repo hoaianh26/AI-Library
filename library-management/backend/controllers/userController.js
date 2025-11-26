@@ -1,8 +1,10 @@
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import { TIERS, TIER_RANK } from "../../shared/tiers.js";
+import crypto from "crypto";
+import { sendEmail } from "../utils/sendEmail.js";
 
-// 🔐 helper tạo JWT
+// 🔐 helper to create JWT
 const generateToken = (user) => {
   return jwt.sign(
     { id: user._id, role: user.role },
@@ -11,7 +13,9 @@ const generateToken = (user) => {
   );
 };
 
-// Đăng ký
+// =========================== AUTH ===================================
+
+// Register
 export const registerUser = async (req, res) => {
   try {
     const {
@@ -35,11 +39,14 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // ❌ KHÔNG hash ở đây nữa, để model lo
+    // generate email verification token
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const verificationExpires = Date.now() + 1000 * 60 * 60 * 24; // 24h
+
     const user = await User.create({
       name,
       email,
-      password, // model sẽ tự hash trong pre("save")
+      password, // password will be hashed by User model
       role,
       gender,
       address,
@@ -50,27 +57,27 @@ export const registerUser = async (req, res) => {
       membershipType: membershipType || "standard",
       avatar,
       favoriteCategories,
+      isEmailVerified: false,
+      emailVerificationToken: verificationToken,
+      emailVerificationExpires: verificationExpires,
+    });
+
+    const verifyUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
+
+    await sendEmail({
+      to: user.email,
+      subject: "Verify your AI Library account",
+      html: `
+        <p>Hi ${user.name || "there"},</p>
+        <p>Please click the link below to verify your email address:</p>
+        <p><a href="${verifyUrl}" target="_blank">${verifyUrl}</a></p>
+        <p>This link will expire in 24 hours.</p>
+      `,
     });
 
     return res.status(201).json({
-      _id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      gender: user.gender,
-      address: user.address,
-      phoneNumber: user.phoneNumber,
-      dateOfBirth: user.dateOfBirth,
-      libraryId: user.libraryId,
-      status: user.status,
-      membershipType: user.membershipType,
-      avatar: user.avatar,
-      favoriteCategories: user.favoriteCategories,
-      // trả luôn các field membership mới nếu có
-      membershipTier: user.membershipTier,
-      membershipExpiresAt: user.membershipExpiresAt,
-      isMembershipActive: user.isMembershipActive,
-      token: generateToken(user),
+      message:
+        "User registered successfully. Please check your email to verify your account.",
     });
   } catch (error) {
     console.error("registerUser error:", error);
@@ -78,18 +85,26 @@ export const registerUser = async (req, res) => {
   }
 };
 
-// Đăng nhập user thường
+// Normal user login
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
-    // ✅ dùng method từ model, không dùng bcrypt trực tiếp
+
     if (user && (await user.matchPassword(password))) {
+      // prevent admin from using this endpoint
       if (user.role === "admin") {
         return res.status(403).json({
           message:
             "Admin login is not allowed here. Please use the admin login page.",
+        });
+      }
+
+      // block login if email is not verified
+      if (!user.isEmailVerified) {
+        return res.status(403).json({
+          message: "Email is not verified. Please check your inbox.",
         });
       }
 
@@ -113,7 +128,7 @@ export const loginUser = async (req, res) => {
   }
 };
 
-// Đăng nhập admin
+// Admin login
 export const loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -123,6 +138,13 @@ export const loginAdmin = async (req, res) => {
       if (user.role !== "admin") {
         return res.status(403).json({ message: "Access denied. Not an admin." });
       }
+
+      if (!user.isEmailVerified) {
+        return res.status(403).json({
+          message: "Email is not verified. Please check your inbox.",
+        });
+      }
+
       return res.json({
         _id: user.id,
         name: user.name,
@@ -139,11 +161,81 @@ export const loginAdmin = async (req, res) => {
   }
 };
 
+// GET /api/users/verify-email?token=...
+export const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      return res
+        .status(400)
+        .json({ message: "Verification token is required" });
+    }
+
+    const user = await User.findOne({
+      emailVerificationToken: token,
+      emailVerificationExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res
+        .status(400)
+        .json({ message: "Token is invalid or has expired" });
+    }
+
+    user.isEmailVerified = true;
+    user.emailVerificationToken = undefined;
+    user.emailVerificationExpires = undefined;
+
+    await user.save();
+
+    return res.json({
+      message: "Email verified successfully. You can now log in.",
+    });
+  } catch (error) {
+    console.error("verifyEmail error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// =========================== USER MANAGEMENT ===============================
+
 // Get all users (admin only)
 export const getUsers = async (req, res) => {
   try {
-    const users = await User.find({}).select("-password");
-    res.json(users);
+    const pageSize = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page) || 1;
+    const searchTerm = req.query.search || '';
+    const sortKey = req.query.sort || 'createdAt';
+    const sortOrder = req.query.order === 'desc' ? -1 : 1;
+
+    const searchFilter = searchTerm
+      ? {
+          $or: [
+            { name: { $regex: searchTerm, $options: "i" } },
+            { email: { $regex: searchTerm, $options: "i" } },
+          ],
+        }
+      : {};
+
+    const sortQuery = {};
+    if (sortKey) {
+        sortQuery[sortKey] = sortOrder;
+    }
+
+    const count = await User.countDocuments({ ...searchFilter });
+    const users = await User.find({ ...searchFilter })
+      .sort(sortQuery)
+      .limit(pageSize)
+      .skip(pageSize * (page - 1))
+      .select("-password");
+
+    res.json({
+      users,
+      page,
+      pages: Math.ceil(count / pageSize),
+      total: count,
+    });
   } catch (error) {
     console.error("getUsers error:", error);
     res.status(500).json({ message: error.message });
@@ -170,9 +262,8 @@ export const updateUser = async (req, res) => {
     user.email = email || user.email;
     user.role = role || user.role;
 
-    // ❌ không hash ở đây
     if (password) {
-      user.password = password; // model sẽ hash trước khi save
+      user.password = password; // will be hashed in model
     }
 
     const updatedUser = await user.save();
@@ -314,7 +405,7 @@ export const getViewHistory = async (req, res) => {
   }
 };
 
-// Helper cộng thêm số tháng vào 1 ngày
+// Helper to add months to a date
 const addMonths = (date, months) => {
   const d = new Date(date);
   const day = d.getDate();
@@ -507,32 +598,27 @@ export const updateUserMembershipByAdmin = async (req, res) => {
 
     user.membershipTier = tier;
 
-    // Handle expiration
     const days = Number(expiresInDays);
     if (days > 0) {
       const now = new Date();
       now.setDate(now.getDate() + days);
       user.membershipExpiresAt = now;
     } else {
-      // If expiresInDays is 0, empty, or not provided, set it to null for permanent
       user.membershipExpiresAt = null;
     }
-    
-    // An admin-set membership is always considered 'active' in principle
-    user.isMembershipActive = true; 
 
-    // Add to history
+    user.isMembershipActive = true;
+
     user.membershipHistory = user.membershipHistory || [];
     user.membershipHistory.push({
       tier: user.membershipTier,
       start: new Date(),
       end: user.membershipExpiresAt,
-      paymentId: `admin_grant_${req.user._id}`, // Note who granted it
+      paymentId: `admin_grant_${req.user._id}`,
     });
 
     const updatedUser = await user.save();
 
-    // Return only the fields relevant to the user list
     res.json({
       _id: updatedUser._id,
       name: updatedUser.name,
@@ -543,11 +629,8 @@ export const updateUserMembershipByAdmin = async (req, res) => {
       membershipExpiresAt: updatedUser.membershipExpiresAt,
       isMembershipActive: updatedUser.isMembershipActive,
     });
-
   } catch (error) {
     console.error("updateUserMembershipByAdmin error", error);
     res.status(500).json({ message: error.message });
   }
 };
-
-

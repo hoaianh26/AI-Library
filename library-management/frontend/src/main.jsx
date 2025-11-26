@@ -21,6 +21,7 @@ import ProfilePage from './pages/ProfilePage.jsx'; // Import ProfilePage
 import Layout from './layouts/Layout'; // Import the new Layout
 import './styles/pageAnimations.css';
 import Membership from './pages/Membership.jsx';
+import VerifyEmail from "./pages/VerifyEmail.jsx";
 
 
 const AppRoutes = () => {
@@ -32,7 +33,7 @@ const AppRoutes = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/admin/login" element={<AdminLogin />} />
-
+        <Route path="/verify-email" element={<VerifyEmail />} />
         {/* Routes wrapped by the Layout (with Navbar) */}
         <Route 
           path="/*" 
