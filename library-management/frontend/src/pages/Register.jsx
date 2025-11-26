@@ -22,6 +22,7 @@ const Register = () => {
     favoriteCategories: [], // Changed to array
   });
   const [error, setError] = useState(null);
+  const [formErrors, setFormErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -50,8 +51,64 @@ const Register = () => {
 
   const { name, email, password, confirmPassword, role, gender, address, phoneNumber, dateOfBirth, libraryId, avatar, favoriteCategories } = formData;
 
+  const validateField = (name, value) => {
+    let error = '';
+    switch (name) {
+      case 'name':
+        if (!value) error = 'Name is required';
+        break;
+      case 'email':
+        if (!value) {
+          error = 'Email is required';
+        } else if (!/\S+@\S+\.\S+/.test(value)) {
+          error = 'Email address is invalid';
+        }
+        break;
+      case 'password':
+        if (!value) {
+          error = 'Password is required';
+        } else if (value.length < 6) {
+          error = 'Password must be at least 6 characters';
+        }
+        break;
+      case 'confirmPassword':
+        if (!value) {
+          error = 'Confirm Password is required';
+        } else if (value !== formData.password) {
+          error = 'Passwords do not match';
+        }
+        break;
+      case 'gender':
+        if (!value) error = 'Gender is required';
+        break;
+      case 'address':
+        if (!value) error = 'Address is required';
+        break;
+      case 'phoneNumber':
+        if (!value) {
+            error = 'Phone number is required';
+        } else if (!/^\d{10}$/.test(value)) {
+            error = 'Phone number must be 10 digits';
+        }
+        break;
+      case 'dateOfBirth':
+        if (!value) error = 'Date of birth is required';
+        break;
+      case 'libraryId':
+        if (!value) error = 'Library ID is required';
+        break;
+      default:
+        break;
+    }
+    return error;
+  };
+
+
   const onChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    const error = validateField(name, value);
+    setFormErrors({ ...formErrors, [name]: error });
   };
 
   const handleCategoryChange = (e) => {
@@ -64,10 +121,22 @@ const Register = () => {
     }));
   };
 
+  const validateForm = () => {
+    const errors = {};
+    Object.keys(formData).forEach(key => {
+      const error = validateField(key, formData[key]);
+      if (error) {
+        errors[key] = error;
+      }
+    });
+    return errors;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       return;
     }
 
@@ -173,11 +242,12 @@ const Register = () => {
                         name="name"
                         value={name}
                         onChange={onChange}
-                        className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
+                        className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.name ? 'border-red-500' : 'border-slate-200'}`}
                         required
                         disabled={loading}
                       />
                     </div>
+                    {formErrors.name && <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>}
                   </div>
 
                   {/* Email field */}
@@ -196,11 +266,12 @@ const Register = () => {
                         name="email"
                         value={email}
                         onChange={onChange}
-                        className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
+                        className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.email ? 'border-red-500' : 'border-slate-200'}`}
                         required
                         disabled={loading}
                       />
                     </div>
+                    {formErrors.email && <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>}
                   </div>
 
                   {/* Password field */}
@@ -219,7 +290,7 @@ const Register = () => {
                         name="password"
                         value={password}
                         onChange={onChange}
-                        className="w-full pl-12 pr-14 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
+                        className={`w-full pl-12 pr-14 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.password ? 'border-red-500' : 'border-slate-200'}`}
                         required
                         disabled={loading}
                       />
@@ -236,6 +307,7 @@ const Register = () => {
                         )}
                       </button>
                     </div>
+                    {formErrors.password && <p className="text-red-500 text-xs mt-1">{formErrors.password}</p>}
                   </div>
 
                   {/* Confirm Password field */}
@@ -254,7 +326,7 @@ const Register = () => {
                         name="confirmPassword"
                         value={confirmPassword}
                         onChange={onChange}
-                        className="w-full pl-12 pr-14 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
+                        className={`w-full pl-12 pr-14 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.confirmPassword ? 'border-red-500' : 'border-slate-200'}`}
                         required
                         disabled={loading}
                       />
@@ -271,6 +343,7 @@ const Register = () => {
                         )}
                       </button>
                     </div>
+                    {formErrors.confirmPassword && <p className="text-red-500 text-xs mt-1">{formErrors.confirmPassword}</p>}
                   </div>
 
                   {/* Role field */}
@@ -309,7 +382,7 @@ const Register = () => {
                         name="gender"
                         value={gender}
                         onChange={onChange}
-                        className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
+                        className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.gender ? 'border-red-500' : 'border-slate-200'}`}
                         disabled={loading}
                       >
                         <option value="">Select Gender</option>
@@ -318,6 +391,7 @@ const Register = () => {
                         <option value="Other">Other</option>
                       </select>
                     </div>
+                    {formErrors.gender && <p className="text-red-500 text-xs mt-1">{formErrors.gender}</p>}
                   </div>
 
                   {/* Address field */}
@@ -336,10 +410,11 @@ const Register = () => {
                         name="address"
                         value={address}
                         onChange={onChange}
-                        className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
+                        className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.address ? 'border-red-500' : 'border-slate-200'}`}
                         disabled={loading}
                       />
                     </div>
+                    {formErrors.address && <p className="text-red-500 text-xs mt-1">{formErrors.address}</p>}
                   </div>
 
                   {/* Phone Number field */}
@@ -358,10 +433,11 @@ const Register = () => {
                         name="phoneNumber"
                         value={phoneNumber}
                         onChange={onChange}
-                        className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
+                        className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.phoneNumber ? 'border-red-500' : 'border-slate-200'}`}
                         disabled={loading}
                       />
                     </div>
+                    {formErrors.phoneNumber && <p className="text-red-500 text-xs mt-1">{formErrors.phoneNumber}</p>}
                   </div>
 
                   {/* Date of Birth field */}
@@ -379,10 +455,11 @@ const Register = () => {
                         name="dateOfBirth"
                         value={dateOfBirth}
                         onChange={onChange}
-                        className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
+                        className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.dateOfBirth ? 'border-red-500' : 'border-slate-200'}`}
                         disabled={loading}
                       />
                     </div>
+                    {formErrors.dateOfBirth && <p className="text-red-500 text-xs mt-1">{formErrors.dateOfBirth}</p>}
                   </div>
 
                   {/* Library ID field */}
@@ -401,10 +478,11 @@ const Register = () => {
                         name="libraryId"
                         value={libraryId}
                         onChange={onChange}
-                        className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90"
+                        className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl bg-white/80 focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all placeholder:text-slate-400 hover:border-indigo-300 hover:bg-white/90 ${formErrors.libraryId ? 'border-red-500' : 'border-slate-200'}`}
                         disabled={loading}
                       />
                     </div>
+                    {formErrors.libraryId && <p className="text-red-500 text-xs mt-1">{formErrors.libraryId}</p>}
                   </div>
 
                   {/* Avatar URL field */}
