@@ -101,7 +101,44 @@ function Navbar() {
 
             {/* Desktop Search Bar */}
             <div className="hidden md:flex flex-grow mx-8 max-w-xl relative" ref={searchBoxRef}>
-                {/* Desktop search implementation */}
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={handleSearchChange}
+                onFocus={() => setIsBoxVisible(true)}
+                placeholder="Search for books, authors..."
+                className="w-full py-3 pl-12 pr-4 bg-white/80 backdrop-blur-sm border-2 border-slate-200/50 rounded-2xl focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all duration-300 shadow-inner"
+              />
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              </div>
+
+              {isBoxVisible && (
+                <div className="absolute top-full mt-3 w-full bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/50 overflow-hidden animate-in fade-in duration-200">
+                  {isSearching && <div className="p-4 text-center text-slate-500">Searching...</div>}
+                  {!isSearching && searchResults.length === 0 && searchTerm.length > 1 && (
+                    <div className="p-4 text-center text-slate-500">No results found.</div>
+                  )}
+                  {searchResults.length > 0 && (
+                    <div className="max-h-96 overflow-y-auto">
+                      {searchResults.map((book) => (
+                        <Link
+                          to={`/books/${book._id}`}
+                          key={book._id}
+                          onClick={handleResultClick}
+                          className="flex items-center gap-4 p-4 hover:bg-indigo-50/80 transition-colors duration-200"
+                        >
+                          <img src={book.imageUrl || 'https://via.placeholder.com/80x120'} alt={book.title} className="w-12 h-auto rounded-md object-cover" />
+                          <div>
+                            <p className="font-semibold text-slate-800">{book.title}</p>
+                            <p className="text-sm text-slate-500">by {book.author}</p>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Mobile Hamburger and User Icon */}

@@ -87,10 +87,10 @@ function App() {
           {/* Recommendations */}
           <Recommendations />
 
-          {/* PHẦN CHIA 2 CỘT BẮT ĐẦU TỪ ĐÂY */}
+          {/* TWO-COLUMN SECTION STARTS HERE */}
           <div className="mt-12 grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            {/* BÊN TRÁI - ALL BOOKS (8 cột) */}
+            {/* LEFT SIDE - ALL BOOKS (8 columns) */}
             <div className="lg:col-span-8">
               {/* Section Header */}
               <div className="mb-6 flex items-center gap-3">
@@ -162,7 +162,7 @@ function App() {
               )}
             </div>
 
-            {/* BÊN PHẢI - FAVORITES (4 cột) */}
+            {/* RIGHT SIDE - FAVORITES (4 columns) */}
             <div className="lg:col-span-4">
               <div className="lg:sticky top-20">
                 {/* Section Header */}
@@ -198,19 +198,7 @@ function App() {
                           </h4>
                           <p className="text-xs text-slate-600 mb-2 line-clamp-1">{book.author}</p>
                           
-                          {/* Progress bar (giả định) */}
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2 text-xs text-slate-500">
-                              <Eye className="w-3 h-3" />
-                              <span>Chương {Math.floor(Math.random() * 50) + 1}/100</span>
-                            </div>
-                            <div className="w-full bg-slate-200 rounded-full h-1.5">
-                              <div 
-                                className="bg-gradient-to-r from-purple-500 to-pink-500 h-1.5 rounded-full transition-all duration-500"
-                                style={{ width: `${Math.floor(Math.random() * 80) + 10}%` }}
-                              ></div>
-                            </div>
-                          </div>
+                          {/* Progress bar (assumed) - Removed */}
                         </div>
                       </Link>
                     ))
@@ -224,15 +212,18 @@ function App() {
 
                 {/* View All Button */}
                 {followingBooks.length > 0 && (
-                  <button className="w-full mt-4 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-2xl font-semibold hover:from-purple-600 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl">
-                    Xem tất cả
+                  <button
+                    onClick={() => navigate('/favorites')}
+                    className="w-full mt-4 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-2xl font-semibold hover:from-purple-600 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+                  >
+                    View All
                   </button>
                 )}
               </div>
             </div>
 
           </div>
-          {/* KẾT THÚC PHẦN CHIA 2 CỘT */}
+          {/* END OF TWO-COLUMN SECTION */}
 
         </div>
       </div>
