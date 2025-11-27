@@ -414,19 +414,31 @@ export const addBookToHistory = async (req, res) => {
 
 // Get user's viewing history
 export const getViewHistory = async (req, res) => {
+  console.log('[GET HISTORY] Received request to get user view history.');
   try {
+    if (!req.user || !req.user.id) {
+      console.log('[GET HISTORY] Error: User not found on request object.');
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+
+    // Step 1: Find the user WITHOUT populating first to see the raw data.
+    const userRaw = await User.findById(req.user.id).lean();
+    if (!userRaw) {
+      console.log(`[GET HISTORY] Error: Could not find user with ID: ${req.user.id}`);
+      return res.status(404).json({ message: "User not found" });
+    }
+    console.log('[GET HISTORY] Raw user.viewHistory from DB:', JSON.stringify(userRaw.viewHistory, null, 2));
+
+    // Step 2: Now find and populate to see the result.
     const user = await User.findById(req.user.id).populate({
       path: "viewHistory.bookId",
       model: "Book",
     });
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    console.log('[GET HISTORY] user.viewHistory after populate:', JSON.stringify(user.viewHistory, null, 2));
 
     return res.status(200).json(user.viewHistory);
   } catch (error) {
-    console.error("getViewHistory error:", error);
+    console.error("[GET HISTORY-FATAL] getViewHistory error:", error);
     res.status(500).json({ message: error.message });
   }
 };
