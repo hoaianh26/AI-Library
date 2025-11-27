@@ -60,19 +60,19 @@ function History() {
 
           {history.length > 0 ? (
             <div className="space-y-6">
-              {history.filter(entry => entry.book).map((entry) => (
-                <Link to={`/books/${entry.book._id}`} key={entry._id} className="block">
+              {history.filter(entry => entry.bookId).map((entry) => (
+                <Link to={`/books/${entry.bookId._id}`} key={entry._id} className="block">
                   <div className="bg-white/70 backdrop-blur-xl rounded-3xl shadow-lg border border-white/50 p-6 hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 hover:bg-white/80 flex items-center gap-6">
                     <img
-                      src={entry.book.imageUrl ? entry.book.imageUrl : 'https://via.placeholder.com/100x150/6366f1/white?text=No+Cover'}
-                      alt={entry.book.title}
+                      src={entry.bookId.imageUrl ? entry.bookId.imageUrl : 'https://via.placeholder.com/100x150/6366f1/white?text=No+Cover'}
+                      alt={entry.bookId.title}
                       className="w-20 h-28 object-cover rounded-lg shadow-md"
                     />
                     <div className="flex-grow">
                       <h3 className="font-bold text-xl text-slate-800 mb-1 group-hover:text-indigo-600 transition-colors duration-300">
-                        {entry.book.title}
+                        {entry.bookId.title}
                       </h3>
-                      <p className="text-slate-600 font-medium mb-2">by {entry.book.author}</p>
+                      <p className="text-slate-600 font-medium mb-2">by {entry.bookId.author}</p>
                       <p className="text-sm text-slate-500">
                         Viewed on: {new Date(entry.viewedAt).toLocaleString()}
                       </p>
