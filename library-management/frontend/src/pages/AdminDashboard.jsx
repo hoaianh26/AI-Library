@@ -22,7 +22,7 @@ function AdminDashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto relative z-10">
-        <div className="flex justify-center items-center gap-4 mb-12">
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12">
           <button onClick={() => setActiveView('books')} className={getButtonClass('books')}>
             Book Management
           </button>

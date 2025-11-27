@@ -38,7 +38,7 @@ const TopMenu = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div 
           ref={menuRef}
-          className="relative flex items-center justify-center space-x-2 h-12"
+          className="relative hidden md:flex items-center justify-center space-x-2 h-12"
           onMouseMove={handleMouseMove}
         >
           {/* Spotlight effect - follows mouse */}

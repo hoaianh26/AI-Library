@@ -455,7 +455,7 @@ function BookManagement() {
 
       <div className="max-w-6xl mx-auto relative z-10">
         <div className="text-center mb-12">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
             <h2 className="text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
               📚 Book Management
             </h2>
@@ -472,63 +472,65 @@ function BookManagement() {
         </div>
 
         <div className="bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden">
-          <table className="w-full text-left">
-            <thead className="border-b border-slate-200">
-              <tr>
-                <th className="p-6 text-sm font-semibold text-slate-600">Cover</th>
-                <th className="p-6 text-sm font-semibold text-slate-600">Title</th>
-                <th className="p-6 text-sm font-semibold text-slate-600">Author</th>
-                <th className="p-6 text-sm font-semibold text-slate-600">Year</th>
-                <th className="p-6 text-sm font-semibold text-slate-600">Date Added</th>
-                <th className="p-6 text-sm font-semibold text-slate-600 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {books.map((book) => (
-                <tr key={book._id} className="border-b border-slate-200 last:border-0 hover:bg-slate-50/50 transition-colors duration-200">
-                  <td className="p-4">
-                    <img
-                      src={book.imageUrl ? book.imageUrl : 'https://via.placeholder.com/80x120/6366f1/white?text=No+Cover'}
-                      alt={book.title}
-                      className="w-12 h-auto object-cover rounded-md shadow-sm"
-                    />
-                  </td>
-                  <td className="p-4 font-semibold text-slate-800">{book.title}</td>
-                  <td className="p-4 text-slate-600">{book.author}</td>
-                  <td className="p-4 text-slate-600">{book.publishedYear}</td>
-                  <td className="p-4 text-slate-500 text-sm">
-                    {new Date(book.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="p-4 text-right">
-                    <div className="flex gap-2 justify-end">
-                      {book.htmlContentPath && (
-                        <a
-                          href={`${API_URL}${book.htmlContentPath}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 px-3 py-2 rounded-lg hover:from-indigo-200 hover:to-purple-200 transition-all duration-300 font-semibold text-xs shadow-sm"
-                        >
-                          Read
-                        </a>
-                      )}
-                      <button
-                        onClick={() => openEditModal(book)}
-                        className="bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 px-3 py-2 rounded-lg hover:from-amber-200 hover:to-orange-200 transition-all duration-300 font-semibold text-xs shadow-sm"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteBook(book._id)}
-                        className="bg-gradient-to-r from-red-100 to-rose-100 text-red-700 px-3 py-2 rounded-lg hover:from-red-200 hover:to-rose-200 transition-all duration-300 font-semibold text-xs shadow-sm"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="border-b border-slate-200">
+                <tr>
+                  <th className="p-6 text-sm font-semibold text-slate-600">Cover</th>
+                  <th className="p-6 text-sm font-semibold text-slate-600">Title</th>
+                  <th className="p-6 text-sm font-semibold text-slate-600">Author</th>
+                  <th className="p-6 text-sm font-semibold text-slate-600">Year</th>
+                  <th className="p-6 text-sm font-semibold text-slate-600">Date Added</th>
+                  <th className="p-6 text-sm font-semibold text-slate-600 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {books.map((book) => (
+                  <tr key={book._id} className="border-b border-slate-200 last:border-0 hover:bg-slate-50/50 transition-colors duration-200">
+                    <td className="p-4">
+                      <img
+                        src={book.imageUrl ? book.imageUrl : 'https://via.placeholder.com/80x120/6366f1/white?text=No+Cover'}
+                        alt={book.title}
+                        className="w-12 h-auto object-cover rounded-md shadow-sm"
+                      />
+                    </td>
+                    <td className="p-4 font-semibold text-slate-800">{book.title}</td>
+                    <td className="p-4 text-slate-600">{book.author}</td>
+                    <td className="p-4 text-slate-600">{book.publishedYear}</td>
+                    <td className="p-4 text-slate-500 text-sm">
+                      {new Date(book.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="p-4 text-right">
+                      <div className="flex gap-2 justify-end">
+                        {book.htmlContentPath && (
+                          <a
+                            href={`${API_URL}${book.htmlContentPath}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 px-3 py-2 rounded-lg hover:from-indigo-200 hover:to-purple-200 transition-all duration-300 font-semibold text-xs shadow-sm"
+                          >
+                            Read
+                          </a>
+                        )}
+                        <button
+                          onClick={() => openEditModal(book)}
+                          className="bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 px-3 py-2 rounded-lg hover:from-amber-200 hover:to-orange-200 transition-all duration-300 font-semibold text-xs shadow-sm"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteBook(book._id)}
+                          className="bg-gradient-to-r from-red-100 to-rose-100 text-red-700 px-3 py-2 rounded-lg hover:from-red-200 hover:to-rose-200 transition-all duration-300 font-semibold text-xs shadow-sm"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
         
         <Pagination page={page} pages={pages} onPageChange={setPage} />

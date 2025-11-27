@@ -164,7 +164,7 @@ function App() {
 
             {/* BÊN PHẢI - FAVORITES (4 cột) */}
             <div className="lg:col-span-4">
-              <div className="sticky top-20">
+              <div className="lg:sticky top-20">
                 {/* Section Header */}
                 <div className="mb-6 flex items-center gap-3">
                   <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-2 rounded-lg shadow-lg">
