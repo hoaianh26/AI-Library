@@ -23,7 +23,7 @@ const Recommendations = () => {
           throw new Error('Failed to fetch recommendations');
         }
         const data = await res.json();
-        // Giới hạn chỉ lấy 10 quyển sách
+        // Limit to 10 books
         setRecommendations(data.slice(0, 10));
       } catch (error) {
         console.error("Error fetching recommendations:", error);
@@ -35,19 +35,19 @@ const Recommendations = () => {
     fetchRecommendations();
   }, [token]);
 
-  // Auto scroll effect - chuyển sau mỗi 3 giây
+  // Auto scroll effect - switch every 3 seconds
   useEffect(() => {
     if (recommendations.length === 0) return;
 
     const interval = setInterval(() => {
       setCurrentIndex((prev) => {
-        // Nếu đến cuối thì quay về đầu
+        // If at the end, go back to the beginning
         if (prev >= recommendations.length - 5) {
           return 0;
         }
         return prev + 1;
       });
-    }, 3000); // 3 giây đổi 1 lần
+    }, 3000); // Switch every 3 seconds
 
     return () => clearInterval(interval);
   }, [recommendations.length]);
@@ -128,7 +128,7 @@ const Recommendations = () => {
 
       {/* Carousel Container */}
       <div className="relative group">
-        {/* Scrollable Container - Hiển thị 5 quyển */}
+        {/* Scrollable Container - Display 5 books */}
         <div 
           ref={scrollRef}
           className="flex overflow-x-hidden gap-4 pb-6 snap-x snap-mandatory scroll-smooth"

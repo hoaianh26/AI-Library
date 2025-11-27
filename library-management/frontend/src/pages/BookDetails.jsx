@@ -351,7 +351,7 @@ const BookDetails = () => {
                         className="group inline-flex items-center justify-center gap-3 w-full bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 text-white p-4 rounded-2xl hover:from-amber-500 hover:via-orange-600 hover:to-rose-600 transition-all duration-300 font-semibold text-lg"
                       >
                         <span className="text-2xl group-hover:scale-110 transition-transform duration-300">🔒</span>
-                        <span className="text-white">Nâng cấp membership để đọc</span>
+                        <span className="text-white">Upgrade Membership to Read</span>
                         <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>

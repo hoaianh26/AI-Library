@@ -102,8 +102,8 @@ function BookManagement() {
     const handleTierToggle = (tier) => {
     setAllowedTiers((prev) =>
       prev.includes(tier)
-        ? prev.filter((t) => t !== tier) // bỏ chọn
-        : [...prev, tier] // thêm chọn
+        ? prev.filter((t) => t !== tier) // deselect
+        : [...prev, tier] // select
     );
   };
 
@@ -410,7 +410,7 @@ function BookManagement() {
                     ))}
                   </div>
                   <p className="mt-1 text-xs text-slate-500">
-                    Bỏ chọn Bronze nếu bạn muốn sách chỉ cho Silver/Gold đọc.
+                    Deselect Bronze if you want the book to be available only for Silver/Gold tiers.
                   </p>
                 </div>
 

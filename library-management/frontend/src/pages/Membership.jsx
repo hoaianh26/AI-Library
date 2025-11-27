@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { upgradeMembership } from "../services/bookService";
 import { createCheckoutSession } from "../services/paymentService";
 
-// Thông tin tier cho UI
+// Tier info for UI
 const TIER_INFO = {
   bronze: {
     name: "Bronze",
@@ -64,12 +64,12 @@ const Membership = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
-  // Nếu chưa login thì báo luôn
+  // If not logged in, show message
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-lg">
-          Bạn cần <span className="font-semibold">đăng nhập</span> để nâng cấp
+          You need to <span className="font-semibold">log in</span> to upgrade your
           membership.
         </p>
       </div>
@@ -78,7 +78,7 @@ const Membership = () => {
 
   const currentTier = user.membershipTier || "bronze";
 
-  // Sau khi Stripe redirect về: ?success=1 hoặc ?cancel=1
+  // After Stripe redirects back: ?success=1 or ?cancel=1
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const success = params.get("success");
@@ -92,7 +92,7 @@ const Membership = () => {
         setLoading(true);
         const { tier, duration } = JSON.parse(pending);
 
-        // Gọi API backend để cập nhật membership (PATCH /api/users/membership)
+        // Call backend API to update membership (PATCH /api/users/membership)
         const updated = await upgradeMembership(tier, duration, token);
 
         const newUser = {
@@ -105,7 +105,7 @@ const Membership = () => {
         login(newUser, token);
         setMessage({
           type: "success",
-          text: "Thanh toán thành công, membership đã được nâng cấp!",
+          text: "Payment successful, membership has been upgraded!",
         });
         localStorage.removeItem("pendingMembership");
       } catch (err) {
@@ -114,7 +114,7 @@ const Membership = () => {
           type: "error",
           text:
             err.message ||
-            "Thanh toán xong nhưng nâng cấp membership thất bại. Vui lòng liên hệ hỗ trợ.",
+            "Payment was successful, but the membership upgrade failed. Please contact support.",
         });
       } finally {
         setLoading(false);
@@ -126,7 +126,7 @@ const Membership = () => {
     } else if (cancel === "1") {
       setMessage({
         type: "error",
-        text: "Bạn đã huỷ thanh toán.",
+        text: "You have cancelled the payment.",
       });
       localStorage.removeItem("pendingMembership");
     }
@@ -136,7 +136,7 @@ const Membership = () => {
     if (!token) {
       setMessage({
         type: "error",
-        text: "Token không hợp lệ, vui lòng đăng nhập lại.",
+        text: "Invalid token, please log in again.",
       });
       return;
     }
@@ -145,20 +145,20 @@ const Membership = () => {
     setMessage(null);
 
     try {
-      // Lưu lựa chọn để dùng sau khi Stripe redirect về
+      // Save selection to use after Stripe redirects back
       localStorage.setItem(
         "pendingMembership",
         JSON.stringify({ tier: selectedTier, duration })
       );
 
-      // Tạo checkout session trên backend
+      // Create checkout session on backend
       const { url } = await createCheckoutSession(
         selectedTier,
         duration,
         token
       );
 
-      // Redirect sang Stripe
+      // Redirect to Stripe
       window.location.href = url;
     } catch (err) {
       console.error("create checkout session error:", err);
@@ -166,7 +166,7 @@ const Membership = () => {
         type: "error",
         text:
           err.message ||
-          "Có lỗi xảy ra khi tạo phiên thanh toán. Vui lòng thử lại.",
+          "An error occurred while creating the payment session. Please try again.",
       });
       setLoading(false);
     }
