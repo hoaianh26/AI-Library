@@ -356,32 +356,58 @@ export const getFavorites = async (req, res) => {
 
 // Add book to viewing history
 export const addBookToHistory = async (req, res) => {
+  console.log('[HISTORY] Received request to add book to history.');
   try {
     const { bookId } = req.body;
+    console.log(`[HISTORY] Book ID from request body: ${bookId}`);
+
+    if (!req.user || !req.user.id) {
+      console.log('[HISTORY] Error: User not found on request object.');
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+    
     const user = await User.findById(req.user.id);
 
     if (!user) {
+      console.log(`[HISTORY] Error: Could not find user with ID: ${req.user.id}`);
       return res.status(404).json({ message: "User not found" });
     }
 
     if (!Array.isArray(user.viewHistory)) {
+      console.log('[HISTORY] User viewHistory is not an array, initializing.');
       user.viewHistory = [];
     }
 
+    const historyLengthBefore = user.viewHistory.length;
+    console.log(`[HISTORY] View history length before update: ${historyLengthBefore}`);
+
+    // Remove existing entry for the same book to move it to the top
     user.viewHistory = user.viewHistory.filter(
       (entry) => entry.bookId.toString() !== bookId
     );
 
-    user.viewHistory.unshift({ bookId: bookId, viewedAt: new Date() });
-
-    if (user.viewHistory.length > 50) {
-      user.viewHistory = user.viewHistory.slice(0, 50);
+    const historyLengthAfterFilter = user.viewHistory.length;
+    if(historyLengthBefore > historyLengthAfterFilter) {
+      console.log(`[HISTORY] Removed existing entry for book ID: ${bookId}`);
     }
 
+    // Add the new entry to the beginning of the array
+    user.viewHistory.unshift({ bookId: bookId, viewedAt: new Date() });
+    console.log(`[HISTORY] Added new entry for book ID: ${bookId} to the beginning of the history.`);
+
+    // Keep history capped at 50
+    if (user.viewHistory.length > 50) {
+      user.viewHistory = user.viewHistory.slice(0, 50);
+      console.log('[HISTORY] History length exceeded 50, trimmed to 50 entries.');
+    }
+
+    console.log('[HISTORY] Attempting to save user document...');
     await user.save();
+    console.log('[HISTORY] User document saved successfully.');
+    
     return res.status(200).json({ message: "Book added to viewing history" });
   } catch (error) {
-    console.error("addBookToHistory error:", error);
+    console.error("[HISTORY-FATAL] addBookToHistory error:", error);
     res.status(500).json({ message: error.message });
   }
 };
