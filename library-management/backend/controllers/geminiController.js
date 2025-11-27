@@ -313,26 +313,24 @@ async function generateContent(req, res) {
 
     let responseText = "";
 
-    if (response.functionCalls() && response.functionCalls().length > 0) {
-      const actualFunctionCall = response.functionCalls()[0];
-      if (actualFunctionCall.name && actualFunctionCall.args) {
-        const toolResponse = await callTool(actualFunctionCall, req);
+    // In modern versions, function calls are in the 'parts' array of the first candidate
+    const functionCall = response.candidates?.[0]?.content?.parts?.[0]?.functionCall;
+
+    if (functionCall) {
+        const toolResponse = await callTool(functionCall, req);
         const toolResult = await chat.sendMessage([
           {
             functionResponse: {
-              name: actualFunctionCall.name,
+              name: functionCall.name,
               response: toolResponse,
             },
           },
         ]);
+        // The response from a tool call also needs to be parsed as text
         responseText = toolResult.response.text();
-      } else {
-        return res.status(500).json({ message: "AI returned a malformed function call." });
-      }
-    } else if (response.text()) {
-      responseText = response.text();
     } else {
-      return res.status(500).json({ message: "AI returned an unexpected response format." });
+      // If no function call, get the text directly
+      responseText = response.text();
     }
 
     const mentionedBooks = await findBooksInText(responseText, user, history);
