@@ -1,4 +1,4 @@
-const BASE_API_URL = "http://localhost:5000/api";
+const BASE_API_URL = "/api";
 
 // Lấy danh sách sách
 export const getBooks = async () => {
