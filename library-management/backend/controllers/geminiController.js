@@ -274,7 +274,7 @@ async function generateContent(req, res) {
         user = await User.findById(userId)
           .populate({ path: 'favorites', model: 'Book', select: 'title author categories' })
           .populate({
-            path: 'viewHistory.book',
+            path: 'viewHistory.bookId',
             model: 'Book',
             select: 'title author categories'
           });
@@ -293,8 +293,8 @@ async function generateContent(req, res) {
             const recentViews = user.viewHistory.slice(-10);
             userContext += "\n**User's Recently Viewed Books:**\n";
             recentViews.forEach(view => {
-              if (view.book) {
-                userContext += `- Title: ${view.book.title}, Author: ${view.book.author}, Categories: ${view.book.categories.join(', ')}\n`;
+              if (view.bookId) {
+                userContext += `- Title: ${view.bookId.title}, Author: ${view.bookId.author}, Categories: ${view.bookId.categories.join(', ')}\n`;
               }
             });
           }
