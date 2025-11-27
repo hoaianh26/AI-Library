@@ -11,7 +11,7 @@ function App() {
   const { user, token } = useAuth();
   const navigate = useNavigate();
 
-  const API_URL = "http://localhost:5000";
+  const API_URL = import.meta.env.VITE_API_BASE_URL;
 
   // Redirect admin to dashboard
   useEffect(() => {
@@ -26,7 +26,7 @@ function App() {
     const fetchBooksAndFavorites = async () => {
       try {
         // Fetch all books
-        const res = await fetch(`${API_URL}/api/books`, {
+        const res = await fetch(`${API_URL}/books`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
