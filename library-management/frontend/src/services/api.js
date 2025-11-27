@@ -1,4 +1,4 @@
-const BASE_API_URL = "/api";
+const BASE_API_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Lấy danh sách sách
 export const getBooks = async () => {
