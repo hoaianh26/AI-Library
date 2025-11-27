@@ -2,7 +2,7 @@
 import { Link } from 'react-router-dom';
 
 const BookCard = ({ book, index }) => {
-  const API_URL = "http://localhost:5000";
+  const API_URL = import.meta.env.VITE_API_BASE_URL.replace('/api', '');
 
   return (
     <Link to={`/books/${book._id}`} className="group relative bg-white/70 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:bg-white/80" style={{ animationDelay: `${index * 100}ms` }}>

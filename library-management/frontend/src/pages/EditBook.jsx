@@ -17,7 +17,7 @@ const EditBook = () => {
   const { token } = useAuth();
   const navigate = useNavigate();
 
-  const API_URL = "http://localhost:5000";
+  const API_URL = import.meta.env.VITE_API_BASE_URL.replace('/api', '');
 
   useEffect(() => {
     const fetchBook = async () => {

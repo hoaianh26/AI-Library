@@ -14,7 +14,7 @@ const Recommendations = () => {
       if (!token) return;
       try {
         setLoading(true);
-        const res = await fetch('http://localhost:5000/api/books/recommendations', {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/books/recommendations`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

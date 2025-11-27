@@ -8,13 +8,13 @@ function History() {
   const [loading, setLoading] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
   const { token } = useAuth();
-  const API_URL = "http://localhost:5000";
+  const API_URL = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
     const fetchHistory = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`${API_URL}/api/users/history`, {
+        const res = await fetch(`${API_URL}/users/history`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

@@ -390,7 +390,7 @@ export const addBookToHistory = async (req, res) => {
 export const getViewHistory = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).populate({
-      path: "viewHistory.book",
+      path: "viewHistory.bookId",
       model: "Book",
     });
 

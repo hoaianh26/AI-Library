@@ -41,7 +41,7 @@ function UserList() {
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const { token } = useAuth();
 
-  const API_URL = "http://localhost:5000";
+  const API_URL = import.meta.env.VITE_API_BASE_URL.replace('/api', '');
 
   const fetchUsers = async (currentPage, currentSearch, currentSort) => {
     try {

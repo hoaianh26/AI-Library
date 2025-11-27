@@ -21,7 +21,7 @@ const VerifyEmail = () => {
 
       try {
         const { data } = await axios.get(
-          "http://localhost:5000/api/users/verify-email",
+          `${import.meta.env.VITE_API_BASE_URL}/users/verify-email`,
           {
             params: { token },
           }

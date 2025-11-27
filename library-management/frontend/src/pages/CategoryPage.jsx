@@ -7,7 +7,7 @@ const CategoryPage = () => {
   const [books, setBooks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const { token } = useAuth();
-  const API_URL = "http://localhost:5000";
+  const API_URL = import.meta.env.VITE_API_BASE_URL.replace('/api', '');
 
   // Create a user-friendly title from the URL slug
   const categoryTitle = categoryName.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
