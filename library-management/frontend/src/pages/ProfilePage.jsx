@@ -25,7 +25,7 @@ const ProfilePage = () => {
 
     const fetchProfile = async () => {
       try {
-        `const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/users/profile`, {
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/users/profile`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
