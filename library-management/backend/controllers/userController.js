@@ -562,9 +562,11 @@ export const updateMembership = async (req, res) => {
       return res.status(400).json({ message: "Invalid durationMonths" });
     }
 
+    console.log("updateMembership: req.body", req.body);
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    console.log("updateMembership: user before", user);
     const currentTier = user.membershipTier || "bronze";
 
     if (TIER_RANK[tier] < TIER_RANK[currentTier]) {
@@ -580,6 +582,7 @@ export const updateMembership = async (req, res) => {
         : now;
 
     const newExpiry = addMonths(base, months);
+    console.log("updateMembership: newExpiry", newExpiry);
 
     user.membershipTier = tier;
     user.membershipExpiresAt = newExpiry;
@@ -592,6 +595,7 @@ export const updateMembership = async (req, res) => {
       end: newExpiry,
       paymentId: paymentId || null,
     });
+    console.log("updateMembership: user after", user);
 
     await user.save();
 
