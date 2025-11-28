@@ -37,8 +37,8 @@ router.post("/create-checkout-session", protect, async (req, res) => {
         },
       ],
 
-      success_url: "http://localhost:5173/membership?success=1",
-      cancel_url: "http://localhost:5173/membership?cancel=1",
+      success_url: `${process.env.FRONTEND_URL}/membership?success=1`,
+      cancel_url: `${process.env.FRONTEND_URL}/membership?cancel=1`,
     });
 
     return res.json({ url: session.url });
