@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
-import { TIERS, DEFAULT_TIER } from "../shared/tiers.js";
+import { TIERS, DEFAULT_TIER } from "../../shared/tiers.js";
 
 const membershipHistorySchema = new mongoose.Schema(
   {

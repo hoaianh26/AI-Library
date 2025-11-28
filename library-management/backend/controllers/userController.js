@@ -1,6 +1,6 @@
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
-import { TIERS, TIER_RANK } from "../shared/tiers.js";
+import { TIERS, TIER_RANK } from "../../shared/tiers.js";
 import crypto from "crypto";
 import { sendEmail } from "../utils/sendEmail.js";
 

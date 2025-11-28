@@ -6,7 +6,7 @@ import { fileURLToPath } from "url";
 import { v2 as cloudinary } from 'cloudinary';
 import { protect, authorizeRoles } from "../middleware/authMiddleware.js"; // Import middleware
 import { getRecommendations } from "../controllers/bookController.js"; // Import recommendations controller
-import { TIERS, TIER_RANK, DEFAULT_TIER } from "../shared/tiers.js";
+import { TIERS, TIER_RANK, DEFAULT_TIER } from "../../shared/tiers.js";
 
 // Configure Cloudinary
 cloudinary.config({

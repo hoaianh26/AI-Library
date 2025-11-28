@@ -1,4 +1,5 @@
 import { StrictMode } from 'react';
+// Force new deployment
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { TIERS } from "../shared/tiers.js";
+import { TIERS } from "../../shared/tiers.js";
 
 const bookSchema = new mongoose.Schema(
   {
