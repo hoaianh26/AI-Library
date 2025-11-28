@@ -20,7 +20,7 @@ import {
   uploadAvatar,
 } from "../controllers/userController.js";
 import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
-import { uploadAvatar } from '../middleware/uploadMiddleware.js';
+import { uploadAvatar as uploadAvatarMiddleware } from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
@@ -49,7 +49,7 @@ router.get("/history", protect, getViewHistory);
 router.get("/profile", protect, getUserProfile);
 router.put("/profile", protect, updateUserProfile);
 router.put("/profile/change-password", protect, changePassword);
-router.post("/profile/avatar", protect, uploadAvatar.single('avatar'), uploadAvatar);
+router.post("/profile/avatar", protect, uploadAvatarMiddleware.single('avatar'), uploadAvatar);
 
 // Membership (nâng cấp / gia hạn)
 router.patch("/membership", protect, updateMembership);
