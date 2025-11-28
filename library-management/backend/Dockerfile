@@ -1,39 +1,32 @@
-# Stage 1: Build Stage
-# Sử dụng phiên bản Node.js 18 (Alpine) để build
-FROM node:18-alpine AS builder
-
-# Thiết lập thư mục làm việc trong container
-WORKDIR /usr/src/app
-
-# Sao chép package.json và package-lock.json của backend
-COPY backend/package*.json ./
-
-# Cài đặt các dependencies cho production
-RUN npm ci --only=production
-
-# Sao chép thư mục shared
-COPY shared/ shared/
-
-# Sao chép toàn bộ mã nguồn còn lại của backend
-COPY backend/ .
-
-# Stage 2: Production Stage
-# Sử dụng một image Node.js Alpine nhỏ hơn cho production
+# Sử dụng phiên bản Node.js 18
 FROM node:18-alpine
 
+# Thiết lập thư mục làm việc gốc cho dự án trong container
 WORKDIR /usr/src/app
 
-# Sao chép các dependencies đã được cài đặt từ stage 'builder'
-COPY --from=builder /usr/src/app/node_modules ./node_modules
+# Sao chép file package.json và package-lock.json của backend vào trước
+# để tận dụng cơ chế caching của Docker, giúp build nhanh hơn khi dependencies không đổi
+COPY backend/package*.json backend/
 
-# Sao chép thư mục shared từ stage 'builder'
-COPY --from=builder /usr/src/app/shared ./shared
+# Di chuyển vào thư mục backend để cài đặt dependencies
+WORKDIR /usr/src/app/backend
 
-# Sao chép mã nguồn ứng dụng từ stage 'builder'
-COPY --from=builder /usr/src/app .
+# Cài đặt chỉ các dependencies cần cho production
+RUN npm ci --only=production
 
-# Mở cổng 5000 để bên ngoài có thể truy cập
+# Quay trở lại thư mục gốc của dự án
+WORKDIR /usr/src/app
+
+# Sao chép toàn bộ mã nguồn của backend và shared vào container
+# Giữ nguyên cấu trúc thư mục gốc
+COPY backend/ ./backend/
+COPY shared/ ./shared/
+
+# Di chuyển vào thư mục backend để chạy ứng dụng
+WORKDIR /usr/src/app/backend
+
+# Mở cổng 5000 để Render có thể truy cập ứng dụng của bạn
 EXPOSE 5000
 
 # Lệnh để khởi động ứng dụng
-CMD [ "node", "server.js" ]
+CMD ["node", "server.js"]
