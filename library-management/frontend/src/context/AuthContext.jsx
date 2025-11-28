@@ -1,14 +1,16 @@
 // frontend/src/context/AuthContext.jsx
 import { createContext, useState, useEffect, useContext } from 'react';
+import axios from 'axios'; // Import axios
 
 const AuthContext = createContext(null);
+const API_URL = import.meta.env.VITE_API_BASE_URL + '/users'; // Define API_URL
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Load user & token từ localStorage khi app khởi động
+  // Load user & token from localStorage when app starts
   useEffect(() => {
     try {
       const storedUser = localStorage.getItem('user');
@@ -27,6 +29,28 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  // New function to refresh user data from the backend
+  const refreshUser = async () => {
+    if (!token) return;
+    try {
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+      const { data } = await axios.get(`${API_URL}/profile`, config);
+      setUser(data);
+      localStorage.setItem('user', JSON.stringify(data));
+      return data;
+    } catch (error) {
+      console.error("Error refreshing user data:", error);
+      // If refresh fails, potentially clear user data or handle re-authentication
+      logout();
+      return null;
+    }
+  };
+
+
   const login = (userData, tokenValue) => {
     setUser(userData);
     setToken(tokenValue);
@@ -38,7 +62,7 @@ export const AuthProvider = ({ children }) => {
       console.error('Error saving auth data to localStorage', err);
     }
   };
-  // Cập nhật một phần thông tin user (vd: sau khi upgrade membership)
+  // Update partial user information (e.g., after membership upgrade)
   const updateUser = (partialUser) => {
     setUser((prev) => {
       const next = { ...(prev || {}), ...partialUser };
@@ -74,7 +98,7 @@ export const AuthProvider = ({ children }) => {
     hasActiveMembership = expires > now;
   }
 
-  const value = {user, token, loading, login, logout, updateUser, membershipTier, membershipExpiresAt, isMembershipActive, hasActiveMembership,};
+  const value = {user, token, loading, login, logout, updateUser, refreshUser, membershipTier, membershipExpiresAt, isMembershipActive, hasActiveMembership,};
 
   return (
     <AuthContext.Provider value={value}>

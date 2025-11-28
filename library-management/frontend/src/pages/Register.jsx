@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import authService from '../services/authService';
+import { register as authRegister } from '../services/authService';
 import PageTransition from '../components/PageTransition';
 import { Mail, Lock, Eye, EyeOff, UserPlus, ArrowLeft, BookOpen, Sparkles, AlertCircle, Phone, Calendar, Fingerprint, Image, List, User as UserIcon, CheckCircle } from 'lucide-react';
 import { CATEGORIES } from '../constants/categories';
@@ -143,7 +143,7 @@ const Register = () => {
     setError(null);
     setSuccess('');
     try {
-      const res = await authService.register({
+      const res = await authRegister({
         name, email, password, role, gender, address, phoneNumber, dateOfBirth, libraryId, avatar, 
         favoriteCategories,
       });

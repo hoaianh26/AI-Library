@@ -22,6 +22,7 @@ import Layout from './layouts/Layout'; // Import the new Layout
 import './styles/pageAnimations.css';
 import Membership from './pages/Membership.jsx';
 import VerifyEmail from "./pages/VerifyEmail.jsx";
+import SettingsPage from './pages/SettingsPage.jsx';
 
 
 const AppRoutes = () => {
@@ -53,6 +54,7 @@ const AppRoutes = () => {
           <Route path="profile" element={<ProfilePage />} /> {/* New Profile Page Route */}
           <Route path="admin/dashboard" element={<AdminRoute> <AdminDashboard /> </AdminRoute>}/>
            <Route path="membership" element={<Membership />} />
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Routes>
     </AnimatePresence>

@@ -4,7 +4,7 @@ import { TIERS, TIER_RANK } from "../shared/tiers.js";
 import crypto from "crypto";
 import { sendEmail } from "../utils/sendEmail.js";
 
-// 🔐 helper to create JWT
+// 🔐 Helper to create JWT
 const generateToken = (user) => {
   return jwt.sign(
     { id: user._id, role: user.role },
@@ -479,7 +479,7 @@ export const getUserProfile = async (req, res) => {
         membershipTier: user.membershipTier,
         membershipExpiresAt: user.membershipExpiresAt,
         isMembershipActive: user.isMembershipActive,
-      });
+    });
     } else {
       return res.status(404).json({ message: "User not found" });
     }
@@ -543,6 +543,59 @@ export const updateUserProfile = async (req, res) => {
   } catch (error) {
     console.error("updateUserProfile error", error);
     res.status(500).json({ message: error.message });
+  }
+};
+
+// Change current user's password
+export const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check current password
+    if (!(await user.matchPassword(currentPassword))) {
+      return res.status(400).json({ message: "Mật khẩu hiện tại không đúng" });
+    }
+
+    user.password = newPassword; // Mongoose pre-save hook will hash it
+    await user.save();
+
+    res.json({ message: "Mật khẩu đã được thay đổi thành công" });
+  } catch (error) {
+    console.error("changePassword error", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Upload user avatar
+export const uploadAvatar = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    // `req.file.path` contains the URL from Cloudinary
+    user.avatar = req.file.path;
+    await user.save();
+
+    res.json({
+      message: "Avatar uploaded successfully",
+      avatarUrl: user.avatar,
+    });
+  } catch (error) {
+    console.error("uploadAvatar error", error);
+    res.status(500).json({ message: "Avatar upload failed" });
   }
 };
 
