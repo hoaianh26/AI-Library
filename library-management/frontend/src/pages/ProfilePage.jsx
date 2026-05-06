@@ -74,7 +74,7 @@ const ProfilePage = () => {
 
         {/* User Name */}
         <h2 className="text-white text-3xl font-bold mb-2">{profile.name}</h2>
-        <p className="text-gray-400 text-lg mb-6 capitalize">{profile.membershipType} Member</p>
+        <p className="text-gray-400 text-lg mb-6 capitalize">{profile.membershipTier} Member</p>
 
         {/* User Details Grid */}
         <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-lg">
@@ -88,11 +88,11 @@ const ProfilePage = () => {
             <span className="text-gray-300">Role:</span>
             <span className="text-white font-medium ml-auto capitalize">{profile.role}</span>
           </div>
-          {profile.gender && (
+          {profile.membershipExpiresAt && (
             <div className="flex items-center gap-3">
-              <UserRound className="w-5 h-5 text-indigo-400" />
-              <span className="text-gray-300">Gender:</span>
-              <span className="text-white font-medium ml-auto capitalize">{profile.gender}</span>
+              <Calendar className="w-5 h-5 text-indigo-400" />
+              <span className="text-gray-300">Membership Expires:</span>
+              <span className="text-white font-medium ml-auto">{formatDate(profile.membershipExpiresAt)}</span>
             </div>
           )}
           {profile.address && (

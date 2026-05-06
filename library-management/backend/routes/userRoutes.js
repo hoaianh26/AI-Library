@@ -36,7 +36,7 @@ router.put("/:id", protect, authorizeRoles("admin"), updateUser);
 router.put("/:id/membership", protect, authorizeRoles("admin"), updateUserMembershipByAdmin);
 
 
-// Favorites routes – chỉ cần đăng nhập, KHÔNG check student/teacher nữa
+// Favorites routes 
 router.post("/favorites/add", protect, addFavorite);
 router.post("/favorites/remove", protect, removeFavorite);
 router.get("/favorites", protect, getFavorites);

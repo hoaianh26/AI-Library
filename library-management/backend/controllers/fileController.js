@@ -42,7 +42,7 @@ const storage = multer.diskStorage({
 
 // File filter for images and zip files
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image/') || file.mimetype === 'application/zip' || file.mimetype === 'application/x-zip-compressed') {
+  if (file.mimetype.startsWith('image/') || file.mimetype === 'application/zip' || file.mimetype === 'application/x-zip-compressed' || file.mimetype === 'application/octet-stream') {
     cb(null, true);
   } else {
     cb(new Error('Invalid file type, only images and zip files are allowed!'), false);
@@ -51,7 +51,7 @@ const fileFilter = (req, file, cb) => {
 
 export const upload = multer({
   storage: storage,
-  limits: { fileSize: 10000000 }, // 10MB limit for files
+  limits: { fileSize: 100000000 }, // 100MB limit for files
   fileFilter: fileFilter,
 }).single('file'); // 'file' is the name of the input field
 

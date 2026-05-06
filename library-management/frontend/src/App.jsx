@@ -7,6 +7,9 @@ import { getFavorites } from './services/bookService';
 
 function App() {
   const [books, setBooks] = useState([]);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [followingBooks, setFollowingBooks] = useState([]);
   const { user, token } = useAuth();
   const navigate = useNavigate();
@@ -26,7 +29,7 @@ function App() {
     const fetchBooksAndFavorites = async () => {
       try {
         // Fetch all books
-        const res = await fetch(`${API_URL}/books`, {
+        const res = await fetch(`${API_URL}/books?page=${page}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -36,6 +39,9 @@ function App() {
         }
         const booksData = await res.json();
         setBooks(booksData.books || []); // Handle paginated and non-paginated response
+        setPage(booksData.page);
+        setPages(booksData.pages);
+        setTotal(booksData.total);
         
         // Fetch favorite books and limit to 5
         const favoriteBooksData = await getFavorites(token);
@@ -49,15 +55,42 @@ function App() {
     if (token && user && user.role !== 'admin') {
       fetchBooksAndFavorites();
     }
-  }, [token, user]);
+  }, [token, user, page]);
 
   // Render nothing or a loading spinner while redirecting or for admin
   if (user && user.role === 'admin') {
     return null; 
   }
 
+  const Pagination = ({ page, pages, onPageChange }) => {
+    if (pages <= 1) return null;
+
+    return (
+      <div className="flex justify-center items-center gap-4 mt-8">
+        <button
+          onClick={() => onPageChange(page - 1)}
+          disabled={page === 1}
+          className="px-4 py-2 bg-white border border-slate-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+        >
+          Previous
+        </button>
+        <span className="text-white font-semibold">
+          Page {page} of {pages}
+        </span>
+        <button
+          onClick={() => onPageChange(page + 1)}
+          disabled={page === pages}
+          className="px-4 py-2 bg-white border border-slate-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+        >
+          Next
+        </button>
+      </div>
+    );
+  };
+
+
   return (
-    <div className="max-w-7xl mx-auto relative z-10 px-4 pb-12">
+    <div className="max-w-7xl mx-auto px-4 pb-12">
       {/* Enhanced Header with Logo */}
       <div className="mb-16 mt-8">
         <div className="flex items-center gap-5 mb-2">
@@ -105,14 +138,14 @@ function App() {
               </div>
               <div>
                 <h2 className="text-3xl font-black text-white">All Books</h2>
-                <p className="text-sm text-gray-400 font-medium mt-0.5">{books.length} books available</p>
+                <p className="text-sm text-gray-400 font-medium mt-0.5">{total} books available</p>
               </div>
             </div>
           </div>
 
           {/* Enhanced Books Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {books.slice(0, 20).map((book, index) => (
+            {books.map((book, index) => (
               <Link to={`/books/${book._id}`} key={book._id} className="flex">
                 <div
                   className="group relative bg-gradient-to-br from-white/80 to-white/60 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/60 overflow-hidden hover:shadow-[0_20px_50px_rgba(138,43,226,0.3)] transition-all duration-500 hover:-translate-y-3 hover:scale-[1.02] flex flex-col w-full"
@@ -159,6 +192,8 @@ function App() {
               </Link>
             ))}
           </div>
+
+          <Pagination page={page} pages={pages} onPageChange={setPage} />
 
           {/* Enhanced Empty State */}
           {books.length === 0 && (
@@ -256,30 +291,6 @@ function App() {
         </div>
 
       </div>
-
-      <style>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes slideInRight {
-          from {
-            opacity: 0;
-            transform: translateX(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-      `}</style>
     </div>
   );
 }

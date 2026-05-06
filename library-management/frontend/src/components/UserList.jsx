@@ -300,9 +300,9 @@ function UserList() {
                         <button
                           onClick={() => handleMembershipSave(user._id)}
                           disabled={!membershipEdit[user._id]}
-                          className="w-full bg-indigo-500 text-white px-2 py-1 rounded-md text-xs font-semibold hover:bg-indigo-600 transition-all disabled:bg-slate-300 disabled:cursor-not-allowed"
+                          className="w-full bg-white border border-indigo-500 px-2 py-1 rounded-md text-xs font-semibold hover:bg-indigo-600 transition-all disabled:bg-slate-300 disabled:cursor-not-allowed"
                         >
-                          Save
+                          <span className="bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">Save</span>
                         </button>
                       </>
                     )}

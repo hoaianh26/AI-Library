@@ -29,7 +29,7 @@ const userSchema = new mongoose.Schema(
       default: "user",
     },
 
-    // Membership (new)
+    // Membership
     membershipTier: {
       type: String,
       enum: TIERS,           // ['bronze','silver','gold']

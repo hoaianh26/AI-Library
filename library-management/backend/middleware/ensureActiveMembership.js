@@ -22,8 +22,11 @@ export const ensureActiveMembership = (req, res, next) => {
     const expiresAt = new Date(user.membershipExpiresAt);
 
     if (expiresAt < now) {
+      // If it's expired, we could either block or just let it pass 
+      // and let the book-level check handle it. 
+      // Given the name 'ensureActiveMembership', it should probably block.
       return res.status(403).json({
-        message: 'Membership expired. Please renew to continue.',
+        message: 'Your premium membership has expired. Please renew to access premium content.',
         code: 'MEMBERSHIP_EXPIRED',
       });
     }

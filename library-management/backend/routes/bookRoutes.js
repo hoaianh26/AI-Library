@@ -24,18 +24,11 @@ const router = express.Router();
 const isBookLockedForUser = (book, user) => {
   if (!user) return true;
 
+  // Admins can access all books
+  if (user.role === "admin") return false;
+
   // If membership is explicitly disabled, block access
   if (user.isMembershipActive === false) return true;
-  
-  // If user has a membership with an expiry date, check if it's expired.
-  // A null expiry date means they are a free/bronze user and should NOT be locked out here.
-  if (user.membershipExpiresAt) {
-    const now = new Date();
-    const expiresAt = new Date(user.membershipExpiresAt);
-    if (expiresAt < now) {
-      return true; // Membership is expired, lock the book.
-    }
-  }
   
   // If book has no allowedTiers, it's free for all active users.
   if (!book.allowedTiers || book.allowedTiers.length === 0) return false;
@@ -45,11 +38,22 @@ const isBookLockedForUser = (book, user) => {
   if (!TIERS.includes(userTier)) {
     userTier = DEFAULT_TIER;
   }
+
+  // If user has a membership with an expiry date, check if it's expired.
+  // If expired, the user falls back to 'bronze' tier.
+  if (user.membershipExpiresAt) {
+    const now = new Date();
+    const expiresAt = new Date(user.membershipExpiresAt);
+    if (expiresAt < now) {
+      userTier = DEFAULT_TIER;
+    }
+  }
+
   const userTierRank = TIER_RANK[userTier] || 0;
 
   // Find the minimum tier rank required for the book.
   const minRequiredTierRank = Math.min(
-    ...book.allowedTiers.map((tier) => TIER_RANK[tier] || Infinity)
+    ...book.allowedTiers.map((tier) => TIER_RANK[tier] || 1)
   );
 
   // Lock the book if the user's tier is lower than the minimum required tier.
@@ -111,7 +115,7 @@ router.get("/search", protect, async (req, res) => {
 // GET all books (accessible to all authenticated users)
 router.get("/", protect, async (req, res) => {
   try {
-    const pageSize = parseInt(req.query.limit) || 10;
+    const pageSize = parseInt(req.query.limit) || 12;
     const page = parseInt(req.query.page) || 1;
 
     const count = await Book.countDocuments({});
@@ -139,19 +143,32 @@ router.get("/", protect, async (req, res) => {
 // GET books by category
 router.get("/category/:categoryName", protect, async (req, res) => {
   try {
+    const pageSize = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page) || 1;
+
     // The category name from URL is slugified (e.g., "science-fiction").
     // We perform a case-insensitive search for the original category name.
     const categoryName = req.params.categoryName.replace(/-/g, " ");
-    const books = await Book.find({
+    const query = {
       categories: { $regex: new RegExp("^" + categoryName + "$", "i") },
-    });
+    };
+
+    const count = await Book.countDocuments(query);
+    const books = await Book.find(query)
+      .limit(pageSize)
+      .skip(pageSize * (page - 1));
 
     const user = req.user;
     const booksWithLock = books.map((book) =>
       attachLockFlag(book, user, { hideContentPathIfLocked: true })
     );
 
-    res.json(booksWithLock);
+    res.json({
+      books: booksWithLock,
+      page,
+      pages: Math.ceil(count / pageSize),
+      total: count,
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

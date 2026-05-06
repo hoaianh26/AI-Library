@@ -4,7 +4,7 @@ import { TIERS, TIER_RANK } from "../../shared/tiers.js";
 import crypto from "crypto";
 import { sendEmail } from "../utils/sendEmail.js";
 
-// 🔐 Helper to create JWT
+//  Helper to create JWT
 const generateToken = (user) => {
   return jwt.sign(
     { id: user._id, role: user.role },
@@ -326,7 +326,9 @@ export const removeFavorite = async (req, res) => {
     user.favorites = user.favorites.filter(
       (favId) => favId.toString() !== bookId
     );
+    
     await user.save();
+    console.log(`[DEBUG] User ${user._id} saved after favorite removal. New favorite count: ${user.favorites.length}`);
 
     return res.status(200).json({
       message: "Book removed from favorites",
@@ -470,7 +472,6 @@ export const getUserProfile = async (req, res) => {
         dateOfBirth: user.dateOfBirth,
         libraryId: user.libraryId,
         status: user.status,
-        membershipType: user.membershipType,
         avatar: user.avatar,
         favoriteCategories: user.favoriteCategories,
         createdAt: user.createdAt,
@@ -559,13 +560,13 @@ export const changePassword = async (req, res) => {
 
     // Check current password
     if (!(await user.matchPassword(currentPassword))) {
-      return res.status(400).json({ message: "Mật khẩu hiện tại không đúng" });
+      return res.status(400).json({ message: "Current password is not correct" });
     }
 
     user.password = newPassword; // Mongoose pre-save hook will hash it
     await user.save();
 
-    res.json({ message: "Mật khẩu đã được thay đổi thành công" });
+    res.json({ message: "Password changed successfully" });
   } catch (error) {
     console.error("changePassword error", error);
     res.status(500).json({ message: error.message });
@@ -670,7 +671,7 @@ export const updateMembership = async (req, res) => {
       isMembershipActive: user.isMembershipActive,
     });
   } catch (error) {
-    console.error("updateMembership error", error);
+    console.error("updateMembership error:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -725,7 +726,7 @@ export const updateUserMembershipByAdmin = async (req, res) => {
       isMembershipActive: updatedUser.isMembershipActive,
     });
   } catch (error) {
-    console.error("updateUserMembershipByAdmin error", error);
+    console.error("updateUserMembershipByAdmin error:", error);
     res.status(500).json({ message: error.message });
   }
 };

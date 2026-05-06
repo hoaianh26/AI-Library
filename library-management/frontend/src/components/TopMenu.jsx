@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useState, useRef } from 'react';
-import { Home, Heart, Clock, Sparkles, Grid3x3, User } from 'lucide-react';
+import { Home, Heart, Clock, Sparkles, Grid3x3, User, Crown } from 'lucide-react';
 import { CATEGORIES } from '../constants/categories';
 
 const TopMenu = () => {
@@ -9,6 +9,7 @@ const TopMenu = () => {
     { name: 'Favorites', path: '/favorites', icon: Heart },
     { name: 'History', path: '/history', icon: Clock },
     { name: 'AI', path: '/ai', icon: Sparkles },
+    { name: 'Membership', path: '/membership', icon: Crown },
     { name: 'Profile', path: '/profile', icon: User },
   ];
 

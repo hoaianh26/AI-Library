@@ -5,6 +5,9 @@ import { useAuth } from '../context/AuthContext';
 const CategoryPage = () => {
   const { categoryName } = useParams();
   const [books, setBooks] = useState([]);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const { token } = useAuth();
   const API_URL = import.meta.env.VITE_API_BASE_URL.replace('/api', '');
@@ -16,7 +19,7 @@ const CategoryPage = () => {
     const fetchBooksByCategory = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch(`${API_URL}/api/books/category/${categoryName}`, {
+        const res = await fetch(`${API_URL}/api/books/category/${categoryName}?page=${page}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -25,7 +28,10 @@ const CategoryPage = () => {
           throw new Error(`HTTP error! status: ${res.status}`);
         }
         const data = await res.json();
-        setBooks(data);
+        setBooks(data.books || []);
+        setPage(data.page);
+        setPages(data.pages);
+        setTotal(data.total);
       } catch (err) {
         console.error(`Error fetching books for category ${categoryName}:`, err);
       } finally {
@@ -36,7 +42,34 @@ const CategoryPage = () => {
     if (token && categoryName) {
       fetchBooksByCategory();
     }
-  }, [token, categoryName]);
+  }, [token, categoryName, page]);
+
+  const Pagination = ({ page, pages, onPageChange }) => {
+    if (pages <= 1) return null;
+
+    return (
+      <div className="flex justify-center items-center gap-4 mt-8">
+        <button
+          onClick={() => onPageChange(page - 1)}
+          disabled={page === 1}
+          className="px-4 py-2 bg-white border border-slate-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+        >
+          Previous
+        </button>
+        <span className="text-slate-700 font-semibold">
+          Page {page} of {pages}
+        </span>
+        <button
+          onClick={() => onPageChange(page + 1)}
+          disabled={page === pages}
+          className="px-4 py-2 bg-white border border-slate-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+        >
+          Next
+        </button>
+      </div>
+    );
+  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-50">
@@ -47,7 +80,7 @@ const CategoryPage = () => {
               Category: {categoryTitle}
             </h2>
             <p className="text-slate-600 text-lg">
-              {isLoading ? 'Loading books...' : `${books.length} books found`}
+              {isLoading ? 'Loading books...' : `${total} books found`}
             </p>
           </div>
 
@@ -78,6 +111,8 @@ const CategoryPage = () => {
               ))}
             </div>
           )}
+
+          <Pagination page={page} pages={pages} onPageChange={setPage} />
 
           {!isLoading && books.length === 0 && (
             <div className="text-center py-16">

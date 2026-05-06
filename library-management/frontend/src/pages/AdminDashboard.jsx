@@ -10,7 +10,7 @@ function AdminDashboard() {
     if (activeView === viewName) {
       return `${baseClass} bg-gradient-to-r from-indigo-500 to-purple-600 text-white`;
     } else {
-      return `${baseClass} bg-white/70 backdrop-blur-xl text-slate-700 hover:bg-white/90`;
+      return `${baseClass} bg-white/70 backdrop-blur-xl text-indigo-600 hover:bg-white/90`;
     }
   };
 

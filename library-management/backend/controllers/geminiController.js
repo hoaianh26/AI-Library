@@ -33,33 +33,28 @@ const tools = [
         },
       },
       {
-        name: "addBookToFavorites",
-        description: "Adds a book to the user's personal list of favorite books.",
+        name: "findSimilarBooks",
+        description: "Finds books that are similar to a given book, based on shared categories.",
         parameters: {
           type: "OBJECT",
           properties: {
             bookTitle: {
               type: "STRING",
-              description: "The exact title of the book to add to favorites.",
+              description: "The title of the book to find similar books for.",
             },
           },
           required: ["bookTitle"],
         },
       },
       {
-        name: "removeBookFromFavorites",
-        description: "Removes a book from the user's personal list of favorite books.",
+        name: "getUserStats",
+        description: "Gets statistics about the user's reading habits, such as favorite categories, favorite authors, and activity counts.",
         parameters: {
           type: "OBJECT",
-          properties: {
-            bookTitle: {
-              type: "STRING",
-              description: "The exact title of the book to remove from favorites.",
-            },
-          },
-          required: ["bookTitle"],
+          properties: {},
         },
       },
+
       {
         name: "getBookDetails",
         description: "Gets detailed information about a specific book, including a summary.",
@@ -110,54 +105,87 @@ async function callTool(toolCall, req) {
     }
   }
 
-  // Tool: addBookToFavorites
-  if (toolCall.name === "addBookToFavorites") {
+  // Tool: findSimilarBooks
+  if (toolCall.name === "findSimilarBooks") {
     const { bookTitle } = toolCall.args || {};
     if (!bookTitle) {
-      return { error: "The book title is required to add it to favorites." };
+      return { error: "The book title is required to find similar books." };
     }
     try {
-      const book = await Book.findOne({ title: { $regex: `^${bookTitle}$`, $options: "i" } });
-      if (!book) {
+      const originalBook = await Book.findOne({ title: { $regex: `^${bookTitle}$`, $options: "i" } });
+      if (!originalBook) {
         return { error: `Could not find a book with the title "${bookTitle}".` };
       }
-      const user = await User.findById(userId);
-      if (user.favorites.includes(book._id)) {
-        return { success: true, message: `The book "${book.title}" is already in your favorites.` };
+
+      if (!originalBook.categories || originalBook.categories.length === 0) {
+        return { books: [], message: `The book "${originalBook.title}" does not have any categories to compare.` };
       }
-      user.favorites.push(book._id);
-      await user.save();
-      return { success: true, message: `I have added "${book.title}" to your favorites.` };
+
+      const similarBooks = await Book.find({
+        categories: { $in: originalBook.categories },
+        _id: { $ne: originalBook._id } // Exclude the original book
+      }).limit(5);
+
+      return { books: similarBooks.map(book => book.toJSON()) };
+
     } catch (error) {
-      console.error("Error adding book to favorites:", error);
-      return { error: "An error occurred while trying to add the book to your favorites." };
+      console.error("Error finding similar books:", error);
+      return { error: "An error occurred while trying to find similar books." };
     }
   }
 
-  // Tool: removeBookFromFavorites
-  if (toolCall.name === "removeBookFromFavorites") {
-    const { bookTitle } = toolCall.args || {};
-     if (!bookTitle) {
-      return { error: "The book title is required to remove it from favorites." };
-    }
+  // Tool: getUserStats
+  if (toolCall.name === "getUserStats") {
     try {
-      const book = await Book.findOne({ title: { $regex: `^${bookTitle}$`, $options: "i" } });
-      if (!book) {
-        return { error: `Could not find a book with the title "${bookTitle}".` };
+      const user = await User.findById(userId)
+        .read('primary')
+        .populate('favorites')
+        .populate('viewHistory.bookId');
+
+      if (!user) {
+        return { error: "User not found." };
       }
-      const user = await User.findById(userId);
-      if (!user.favorites.includes(book._id)) {
-        return { success: false, message: `The book "${book.title}" is not in your favorites.` };
-      }
-      user.favorites.pull(book._id);
-      await user.save();
-      return { success: true, message: `I have removed "${book.title}" from your favorites.` };
+
+      const favoriteCount = user.favorites.length;
+      const historyCount = user.viewHistory.length;
+
+      const calculateTopItems = (items, key) => {
+        if (!items || items.length === 0) return 'N/A';
+        const counts = items.reduce((acc, item) => {
+          if (item) { // Ensure item is not null
+            const values = Array.isArray(item[key]) ? item[key] : [item[key]];
+            values.forEach(value => {
+              if (value) {
+                acc[value] = (acc[value] || 0) + 1;
+              }
+            });
+          }
+          return acc;
+        }, {});
+        
+        const topItem = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b, null);
+        return topItem || 'N/A';
+      };
+      
+      const topFavoriteCategory = calculateTopItems(user.favorites, 'categories');
+      const topFavoriteAuthor = calculateTopItems(user.favorites, 'author');
+      
+      return {
+        stats: {
+          favoriteCount,
+          historyCount,
+          topFavoriteCategory,
+          topFavoriteAuthor,
+        }
+      };
+
     } catch (error) {
-      console.error("Error removing book from favorites:", error);
-      return { error: "An error occurred while trying to remove the book from your favorites." };
+      console.error("Error getting user stats:", error);
+      return { error: "An error occurred while getting user stats." };
     }
   }
-  
+
+
   // Tool: getBookDetails
   if (toolCall.name === "getBookDetails") {
       const { bookTitle } = toolCall.args || {};
@@ -209,6 +237,7 @@ async function findBooksInText(text, user, history) {
   return mentionedBooks;
 }
 
+//generate sumary
 const generateSummary = async (req, res) => {
     try {
         const { bookId } = req.body;
@@ -272,6 +301,7 @@ async function generateContent(req, res) {
     if (userId) {
       try {
         user = await User.findById(userId)
+          .read('primary') // Force read from primary replica to avoid lag
           .populate({ path: 'favorites', model: 'Book', select: 'title author categories' })
           .populate({
             path: 'viewHistory.bookId',

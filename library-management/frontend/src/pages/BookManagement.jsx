@@ -114,11 +114,12 @@ function BookManagement() {
     formData.append("file", file);
 
     try {
+      const headers = new Headers();
+      headers.append('Authorization', `Bearer ${token}`);
+
       const res = await fetch(`${API_URL}/api/upload`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: headers,
         body: formData,
       });
 
@@ -273,7 +274,7 @@ function BookManagement() {
         >
           Previous
         </button>
-        <span className="text-slate-600 font-semibold">
+        <span className="text-white font-semibold">
           Page {page} of {pages}
         </span>
         <button
@@ -456,7 +457,7 @@ function BookManagement() {
       <div className="max-w-6xl mx-auto relative z-10">
         <div className="text-center mb-12">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-            <h2 className="text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+            <h2 class="text-4xl font-bold text-white">
               📚 Book Management
             </h2>
             <button 
@@ -466,7 +467,7 @@ function BookManagement() {
               ➕ Add New Book
             </button>
           </div>
-          <p className="text-slate-600 text-lg">
+          <p class="text-white text-lg">
             Manage your digital library. You have ${total} books.
           </p>
         </div>
